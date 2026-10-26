@@ -26,6 +26,9 @@ portal:
   navigation:
     topOffset: 64
     items:
+      - id: hello-world
+        path: /hello-world
+        title: Hello World
       - id: templates
         path: /self-service
         title: Templates
@@ -247,6 +250,8 @@ catalog:
     #         password: ${CONTENT_REGISTRY_PASSWORD}
 
 ansible:
+  hello-world:
+    enabled: true
   devSpaces:
     baseUrl: https://devspaces.apps.ansible-rhdh.testing.ansible.com/
   automationHub:

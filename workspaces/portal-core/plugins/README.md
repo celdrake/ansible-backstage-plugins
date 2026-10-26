@@ -1,8 +1,10 @@
 # Portal core and SDK packages
 
-These eight packages separate shared contracts, frontend contribution authoring,
-host rendering, reusable UI, and backend infrastructure. They support native NFS
+These packages separate shared contracts, frontend contribution authoring, host
+rendering, reusable UI, and backend infrastructure. They support native NFS
 composition; they do not require a global contribution registry singleton.
+`portal-hello-world` is a small frontend contributor in this workspace that
+demonstrates a native page and an entity-tab contribution.
 
 ## Package responsibilities
 
@@ -20,6 +22,8 @@ composition; they do not require a global contribution registry singleton.
   It is not a Module Federation singleton registry provider.
 - **`portal-plugin-sdk`** — shared UI, notifications, caching, context hooks,
   polling integration, styles, icons and theme utilities.
+- **`portal-hello-world`** — runnable source-app example of a native NFS page
+  and a Portal SDK entity tab; it has no backend.
 - **`portal-plugin-node`** — injected operation, entitlement, organization and
   health services; identity/context, audit and persistence helpers.
 - **`portal-operations-backend`** — operation HTTP transport and entitlement

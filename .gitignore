@@ -53,6 +53,7 @@ site
 
 # SQLite database files (dev environment persistence)
 sqlite-data/
+workspaces/portal-core/packages/backend/:memory:/
 
 # Sensitive credentials
 *-credentials.yaml

@@ -26,6 +26,9 @@ export const optionalContributorLoader = createFrontendFeatureLoader({
     const profile = resolveDevelopmentProfile(config);
     return [
       ...(profile !== 'core'
+        ? [import('@ansible/portal-hello-world/alpha')]
+        : []),
+      ...(profile !== 'core'
         ? [import('@ansible/portal-scaffolder/alpha')]
         : []),
       ...(profile === 'full'

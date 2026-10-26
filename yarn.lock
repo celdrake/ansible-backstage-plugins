@@ -707,6 +707,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ansible/portal-hello-world@workspace:^, @ansible/portal-hello-world@workspace:workspaces/portal-core/plugins/portal-hello-world":
+  version: 0.0.0-use.local
+  resolution: "@ansible/portal-hello-world@workspace:workspaces/portal-core/plugins/portal-hello-world"
+  dependencies:
+    "@ansible/portal-extension-api": "workspace:^"
+    "@ansible/portal-extension-common": "workspace:^"
+    "@backstage/cli": "npm:^0.36.0"
+    "@backstage/core-compat-api": "npm:0.5.11"
+    "@backstage/frontend-plugin-api": "npm:0.17.1"
+    "@material-ui/icons": "npm:^4.9.1"
+    "@types/react": "npm:^18"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+  peerDependencies:
+    react: ^18.3.1
+    react-dom: ^18.3.1
+  languageName: unknown
+  linkType: soft
+
 "@ansible/portal-operations-backend@workspace:^, @ansible/portal-operations-backend@workspace:workspaces/portal-core/plugins/portal-operations-backend":
   version: 0.0.0-use.local
   resolution: "@ansible/portal-operations-backend@workspace:workspaces/portal-core/plugins/portal-operations-backend"
@@ -25834,6 +25853,7 @@ __metadata:
     "@ansible/plugin-backstage-rhaap": "workspace:^"
     "@ansible/portal-core": "workspace:^"
     "@ansible/portal-extension-api": "workspace:^"
+    "@ansible/portal-hello-world": "workspace:^"
     "@ansible/portal-scaffolder": "workspace:^"
     "@backstage-community/plugin-github-actions": "npm:^0.11.1"
     "@backstage-community/plugin-rbac": "npm:1.51.0"
