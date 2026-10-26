@@ -3,8 +3,9 @@
 These packages separate shared contracts, frontend contribution authoring, host
 rendering, reusable UI, and backend infrastructure. They support native NFS
 composition; they do not require a global contribution registry singleton.
-`portal-hello-world` is a small frontend contributor in this workspace that
-demonstrates a native page and an entity-tab contribution.
+`portal-hello-world` and `portal-hello-world-backend` form a small runnable
+example of a native page, an entity-tab contribution, and authenticated
+frontend-to-backend identity flow.
 
 ## Package responsibilities
 
@@ -23,7 +24,9 @@ demonstrates a native page and an entity-tab contribution.
 - **`portal-plugin-sdk`** — shared UI, notifications, caching, context hooks,
   polling integration, styles, icons and theme utilities.
 - **`portal-hello-world`** — runnable source-app example of a native NFS page
-  and a Portal SDK entity tab; it has no backend.
+  and a Portal SDK entity tab.
+- **`portal-hello-world-backend`** — authenticated `GET /api/hello-world/whoami`
+  example using Backstage `HttpAuthService` and `UserInfoService`.
 - **`portal-plugin-node`** — injected operation, entitlement, organization and
   health services; identity/context, audit and persistence helpers.
 - **`portal-operations-backend`** — operation HTTP transport and entitlement
