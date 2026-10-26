@@ -29,6 +29,9 @@ export const optionalContributorLoader = createFrontendFeatureLoader({
         ? [import('@ansible/portal-hello-world/alpha')]
         : []),
       ...(profile !== 'core'
+        ? [import('@ansible/portal-trust-signals/alpha')]
+        : []),
+      ...(profile !== 'core'
         ? [import('@ansible/portal-scaffolder/alpha')]
         : []),
       ...(profile === 'full'

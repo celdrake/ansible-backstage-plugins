@@ -41,6 +41,7 @@ import { RequirePermission } from '@backstage/plugin-permission-react';
 import { catalogEntityCreatePermission } from '@backstage/plugin-catalog-common/alpha';
 import { providers } from './identityProviders';
 import { AnsiblePage } from '@ansible/plugin-backstage-rhaap';
+import { registerTrustSignalsContribution } from '@ansible/portal-trust-signals/dynamic';
 // Local-testing mount for the content experience. In a dynamic (RHDH) deployment
 // the same page is mounted by `dynamicRoutes` config instead — see the plugin's
 // routes.ts.
@@ -62,6 +63,9 @@ import {
   ScmSelectorFieldExtension,
 } from '@ansible/portal-scaffolder';
 import { RbacPage } from '@backstage-community/plugin-rbac';
+
+// The legacy app renders registry contributions directly.
+registerTrustSignalsContribution();
 
 const app = createApp({
   apis,

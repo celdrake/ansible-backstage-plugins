@@ -40,3 +40,6 @@ p, role:default/portal-users, scaffolder.task.read, read, allow
 p, role:default/portal-users, scaffolder.task.cancel, use, allow
 
 g, group:default/portal-users, role:default/portal-users
+
+p, role:default/portal-dev-viewer, ansible.git-repositories.view, use, allow
+g, user:development/guest, role:default/portal-dev-viewer

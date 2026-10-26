@@ -21,6 +21,7 @@ import {
 
 const mockScaffolderFactory = jest.fn();
 const mockApmeFactory = jest.fn();
+const mockTrustSignalsFactory = jest.fn();
 
 jest.mock('@ansible/portal-scaffolder/alpha', () => {
   mockScaffolderFactory();
@@ -29,6 +30,21 @@ jest.mock('@ansible/portal-scaffolder/alpha', () => {
     default: jest
       .requireActual('@backstage/frontend-plugin-api')
       .createFrontendPlugin({ pluginId: 'portal-scaffolder', extensions: [] }),
+  };
+});
+jest.mock('@ansible/portal-hello-world/alpha', () => ({
+  __esModule: true,
+  default: jest
+    .requireActual('@backstage/frontend-plugin-api')
+    .createFrontendPlugin({ pluginId: 'hello-world', extensions: [] }),
+}));
+jest.mock('@ansible/portal-trust-signals/alpha', () => {
+  mockTrustSignalsFactory();
+  return {
+    __esModule: true,
+    default: jest
+      .requireActual('@backstage/frontend-plugin-api')
+      .createFrontendPlugin({ pluginId: 'trust-signals', extensions: [] }),
   };
 });
 jest.mock('@ansible/plugin-backstage-apme/alpha', () => {
@@ -69,9 +85,19 @@ describe('development contributor selection', () => {
   );
 
   it.each([
-    [undefined, ['portal-scaffolder', 'apme'], 1, 1],
-    ['full', ['portal-scaffolder', 'apme'], 1, 1],
-    ['scaffolder', ['portal-scaffolder'], 1, 0],
+    [
+      undefined,
+      ['hello-world', 'trust-signals', 'portal-scaffolder', 'apme'],
+      1,
+      1,
+    ],
+    [
+      'full',
+      ['hello-world', 'trust-signals', 'portal-scaffolder', 'apme'],
+      1,
+      1,
+    ],
+    ['scaffolder', ['hello-world', 'trust-signals', 'portal-scaffolder'], 1, 0],
     ['core', [], 0, 0],
   ] as const)(
     'loads only selected contributor modules for %s',

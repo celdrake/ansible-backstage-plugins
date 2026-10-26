@@ -6,6 +6,8 @@ composition; they do not require a global contribution registry singleton.
 `portal-hello-world` and `portal-hello-world-backend` form a small runnable
 example of a native page, an entity-tab contribution, and authenticated
 frontend-to-backend identity flow.
+`portal-trust-signals` and its backend implement the legacy registry quickstart
+as a separate Git Repository detail tab.
 
 ## Package responsibilities
 
@@ -27,6 +29,10 @@ frontend-to-backend identity flow.
   and a Portal SDK entity tab.
 - **`portal-hello-world-backend`** — authenticated `GET /api/hello-world/whoami`
   example using Backstage `HttpAuthService` and `UserInfoService`.
+- **`portal-trust-signals`** — quickstart Git Repository detail tab using
+  `usePortalContext` and the shared Portal SDK, with legacy and NFS declarations.
+- **`portal-trust-signals-backend`** — sample organization-scoped trust-signal
+  route with identity middleware, audit logging, and health reporting.
 - **`portal-plugin-node`** — injected operation, entitlement, organization and
   health services; identity/context, audit and persistence helpers.
 - **`portal-operations-backend`** — operation HTTP transport and entitlement
