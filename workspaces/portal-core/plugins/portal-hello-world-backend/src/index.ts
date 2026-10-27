@@ -6,6 +6,7 @@ import { ansibleServiceRef } from '@ansible/backstage-rhaap-common';
 import express from 'express';
 import type { HttpAuthService } from '@backstage/backend-plugin-api';
 import { createAapApiExampleRouter } from './aapApiExampleRouter';
+import { createFlightctlFleetsRouter } from './flightctlFleetsRouter';
 
 export default createBackendPlugin({
   pluginId: 'hello-world',
@@ -32,6 +33,14 @@ export default createBackendPlugin({
 
         router.use(
           createAapApiExampleRouter({
+            httpAuth,
+            userInfo,
+            ansibleService,
+            config,
+          }),
+        );
+        router.use(
+          createFlightctlFleetsRouter({
             httpAuth,
             userInfo,
             ansibleService,

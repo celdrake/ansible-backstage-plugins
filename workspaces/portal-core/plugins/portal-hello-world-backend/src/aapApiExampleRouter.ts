@@ -51,7 +51,7 @@ function isMultiOrgEnabled(config: Config): boolean {
   );
 }
 
-async function readUserOrganizations(options: {
+export async function readUserOrganizations(options: {
   req: express.Request;
   httpAuth: HttpAuthService;
   userInfo: UserInfoService;
@@ -97,11 +97,14 @@ async function readUserOrganizations(options: {
     accessToken,
   );
   const payload = await response.json();
-  const results: unknown[] = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload?.results)
-      ? payload.results
-      : [];
+  let results: unknown[];
+  if (Array.isArray(payload)) {
+    results = payload;
+  } else if (Array.isArray(payload?.results)) {
+    results = payload.results;
+  } else {
+    results = [];
+  }
   const mappings = readOrganizationMappings(options.config);
 
   const organizations = results
@@ -109,8 +112,8 @@ async function readUserOrganizations(options: {
       (item): item is { id: string | number; name: string } =>
         !!item &&
         typeof item === 'object' &&
-        ('string' === typeof (item as { id?: unknown }).id ||
-          'number' === typeof (item as { id?: unknown }).id) &&
+        (typeof (item as { id?: unknown }).id === 'string' ||
+          typeof (item as { id?: unknown }).id === 'number') &&
         typeof (item as { name?: unknown }).name === 'string',
     )
     .map(item => {

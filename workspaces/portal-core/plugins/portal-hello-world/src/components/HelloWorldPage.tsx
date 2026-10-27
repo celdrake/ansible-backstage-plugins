@@ -35,12 +35,22 @@ type AapApiState =
   | { status: 'loaded'; result: unknown }
   | { status: 'error'; message: string };
 
+type FleetsState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'loaded'; result: unknown }
+  | { status: 'error'; message: string };
+
 async function readError(response: Response): Promise<string> {
   const body = await response.text();
   if (!body) return `Request failed (${response.status}).`;
   try {
-    const parsed = JSON.parse(body) as { error?: unknown };
+    const parsed = JSON.parse(body) as {
+      error?: unknown;
+      message?: unknown;
+    };
     if (typeof parsed.error === 'string') return parsed.error;
+    if (typeof parsed.message === 'string') return parsed.message;
   } catch {
     // Keep a plain-text error response readable.
   }
@@ -59,6 +69,9 @@ export function HelloWorldPage() {
     useState<AapOrganizationsState>({ status: 'loading' });
   const [selectedExternalOrgId, setSelectedExternalOrgId] = useState('');
   const [aapApiState, setAapApiState] = useState<AapApiState>({
+    status: 'idle',
+  });
+  const [fleetsState, setFleetsState] = useState<FleetsState>({
     status: 'idle',
   });
 
@@ -113,20 +126,21 @@ export function HelloWorldPage() {
           throw new Error('Sign in to Backstage before connecting to AAP.');
         }
 
-        // This is an AAP OAuth access token, separate from the Backstage token.
-        // Keep it in memory and never render or persist its value.
         const aapAccessToken = await aapAuthApi.getAccessToken();
         if (!aapAccessToken) {
           throw new Error('Sign in with the RH AAP provider to continue.');
         }
 
         const baseUrl = await discoveryApi.getBaseUrl('hello-world');
-        const response = await fetchApi.fetch(`${baseUrl}/aap-organizations`, {
-          headers: {
-            Authorization: `Bearer ${backstageToken}`,
-            'X-RHAAP-Access-Token': aapAccessToken,
+        const response = await fetchApi.fetch(
+          `${baseUrl}/aap-organizations`,
+          {
+            headers: {
+              Authorization: `Bearer ${backstageToken}`,
+              'X-RHAAP-Access-Token': aapAccessToken,
+            },
           },
-        });
+        );
         if (!response.ok) throw new Error(await readError(response));
 
         const body = (await response.json()) as {
@@ -150,8 +164,7 @@ export function HelloWorldPage() {
         if (active) {
           setAapOrganizations({
             status: 'error',
-            message:
-              error instanceof Error ? error.message : String(error),
+            message: error instanceof Error ? error.message : String(error),
           });
         }
       }
@@ -171,10 +184,12 @@ export function HelloWorldPage() {
       if (!backstageToken) {
         throw new Error('Sign in to Backstage before calling the API.');
       }
+
       const aapAccessToken = await aapAuthApi.getAccessToken();
       if (!aapAccessToken) {
         throw new Error('Sign in with the RH AAP provider to continue.');
       }
+
       const baseUrl = await discoveryApi.getBaseUrl('hello-world');
       const url = new URL(`${baseUrl}/aap-api-example`);
       url.searchParams.set('externalOrgId', selectedExternalOrgId);
@@ -194,10 +209,42 @@ export function HelloWorldPage() {
     }
   }
 
+  async function loadFleets() {
+    setFleetsState({ status: 'loading' });
+    try {
+      const { token: backstageToken } = await identityApi.getCredentials();
+      if (!backstageToken) {
+        throw new Error('Sign in to Backstage before calling the API.');
+      }
+
+      const aapAccessToken = await aapAuthApi.getAccessToken();
+      if (!aapAccessToken) {
+        throw new Error('Sign in with the RH AAP provider to continue.');
+      }
+
+      const baseUrl = await discoveryApi.getBaseUrl('hello-world');
+      const response = await fetchApi.fetch(`${baseUrl}/fleets`, {
+        headers: {
+          Authorization: `Bearer ${backstageToken}`,
+          'X-RHAAP-Access-Token': aapAccessToken,
+        },
+      });
+      if (!response.ok) throw new Error(await readError(response));
+
+      setFleetsState({ status: 'loaded', result: await response.json() });
+    } catch (error) {
+      setFleetsState({
+        status: 'error',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   return (
     <main style={{ padding: 24 }}>
       <h1>Hello, world!</h1>
       <p>This page is served by the native Hello World Portal plugin.</p>
+
       <section aria-labelledby="identity-heading">
         <h2 id="identity-heading">Authenticated identity</h2>
         {state.status === 'loading' && <p role="status">Checking identity…</p>}
@@ -237,13 +284,12 @@ export function HelloWorldPage() {
           </>
         )}
       </section>
+
       <section aria-labelledby="aap-heading" style={{ marginTop: 32 }}>
         <h2 id="aap-heading">AAP token and organization mapping</h2>
         <p>
-          This example reads an AAP access token after RH AAP sign-in, resolves
-          the signed-in user’s external AAP organization IDs, maps one to an
-          internal API organization ID, and calls the configured application
-          API.
+          This keeps the existing AAP organization lookup and mapped application
+          API example.
         </p>
         {aapOrganizations.status === 'loading' && (
           <p role="status">Connecting to AAP…</p>
@@ -320,6 +366,30 @@ export function HelloWorldPage() {
           </pre>
         )}
       </section>
+
+      <section aria-labelledby="fleets-heading" style={{ marginTop: 32 }}>
+        <h2 id="fleets-heading">Flightctl fleets</h2>
+        <p>
+          Calls <code>GET /api/v1/fleets</code> with the signed-in AAP access
+          token and the PoC organization configured on the backend.
+        </p>
+        <button
+          type="button"
+          disabled={fleetsState.status === 'loading'}
+          onClick={() => void loadFleets()}
+        >
+          {fleetsState.status === 'loading' ? 'Loading fleets…' : 'Load fleets'}
+        </button>
+        {fleetsState.status === 'error' && (
+          <p role="alert">{fleetsState.message}</p>
+        )}
+        {fleetsState.status === 'loaded' && (
+          <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+            {JSON.stringify(fleetsState.result, null, 2)}
+          </pre>
+        )}
+      </section>
     </main>
   );
 }
+
