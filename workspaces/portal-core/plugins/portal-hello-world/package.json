@@ -22,6 +22,7 @@
     "clean": "backstage-cli package clean"
   },
   "dependencies": {
+    "@ansible/aap-app-auth": "workspace:^",
     "@ansible/portal-extension-api": "workspace:^",
     "@ansible/portal-extension-common": "workspace:^",
     "@backstage/core-compat-api": "0.5.11",

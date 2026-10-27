@@ -6,6 +6,7 @@
   "description": "Authenticated whoami endpoint for the Portal Hello World PoC.",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "configSchema": "config.d.ts",
   "backstage": {
     "role": "backend-plugin",
     "pluginId": "hello-world"
@@ -17,7 +18,10 @@
     "clean": "backstage-cli package clean"
   },
   "dependencies": {
+    "@ansible/backstage-rhaap-common": "workspace:^",
     "@backstage/backend-plugin-api": "^1.8.0",
+    "@backstage/config": "^1.3.6",
+    "@backstage/errors": "^1.2.7",
     "express": "^5.1.0"
   },
   "devDependencies": {
@@ -25,6 +29,7 @@
     "@types/express": "^5.0.3"
   },
   "files": [
+    "config.d.ts",
     "dist"
   ]
 }
