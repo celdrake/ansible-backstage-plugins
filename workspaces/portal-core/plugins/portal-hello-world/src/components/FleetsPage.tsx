@@ -14,7 +14,7 @@ import { FLEET_LIST } from './fleetDemoData';
 
 // CELIA-WIP: translations??
 
-const devicesOnline = (fleet: Fleet) => {
+const OnlineDevices = ({ fleet }: { fleet: Fleet }) => {
   const summary = fleet.status?.devicesSummary;
   if (!summary) {
     // CELIA-WIP: Discuss the UX for a missing addDevicesSummary response.
@@ -27,14 +27,34 @@ const devicesOnline = (fleet: Fleet) => {
   return `${online}/${summary.total} online`;
 };
 
-const desiredSystemImage = (fleet: Fleet): string => {
-  const os = fleet.spec.template.spec.os;
-  if (os?.image) return os.image;
-  if (os?.catalogItemRef) {
-    const { catalog, item, version } = os.catalogItemRef;
-    return `${catalog}/${item}:${version}`;
+const FleetHealth = ({ fleet }: { fleet: Fleet }) => {
+  return <StatusPending>WIP</StatusPending>;
+};
+
+const FleetOs = ({ fleet }: { fleet: Fleet }) => {
+  const osSpec = fleet.spec.template.spec.os;
+  let osImage = '';
+  if (osSpec?.image) {
+    osImage = osSpec.image;
   }
-  return 'No system image configured';
+  if (osSpec?.catalogItemRef) {
+    const { catalog, item, version } = osSpec.catalogItemRef;
+    osImage = `${catalog}/${item}:${version}`;
+  }
+  return (
+    <div>
+      <div>{osImage ?? 'No system image configured'}</div>
+      <small>Current version: WIP</small>
+      <br />
+      <small>Available version: WIP</small>
+      <div>
+        Update state: <StatusPending>WIP</StatusPending>
+      </div>
+      <small>Rollout progress: WIP</small>
+      <br />
+      <small>OS source: WIP</small>
+    </div>
+  );
 };
 
 const columns: TableColumn<Fleet>[] = [
@@ -45,25 +65,24 @@ const columns: TableColumn<Fleet>[] = [
     render: fleet => <strong>{fleet.metadata.name as string}</strong>,
   },
   {
-    title: 'Devices',
-    render: fleet => devicesOnline(fleet),
+    title: 'Health',
+    render: fleet => <FleetHealth fleet={fleet} />,
   },
   {
-    title: 'Operating system',
-    render: fleet => (
-      <div>
-        <div>{desiredSystemImage(fleet)}</div>
-        <small>Current version: WIP</small>
-        <br />
-        <small>Available version: WIP</small>
-        <div>
-          Update state: <StatusPending>WIP</StatusPending>
-        </div>
-        <small>Rollout progress: WIP</small>
-        <br />
-        <small>OS source: WIP</small>
-      </div>
-    ),
+    title: 'Devices',
+    render: fleet => <OnlineDevices fleet={fleet} />,
+  },
+  {
+    title: 'Catalog',
+    render: fleet => <FleetOs fleet={fleet} />,
+  },
+  {
+    title: 'Maintenance window',
+    render: fleet => 'Sat 02:00 - 06:00 UTC',
+  },
+  {
+    title: 'Actions',
+    render: fleet => 'WIP',
   },
 ];
 
