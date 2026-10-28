@@ -25,6 +25,7 @@
     "@ansible/aap-app-auth": "workspace:^",
     "@ansible/portal-extension-api": "workspace:^",
     "@ansible/portal-extension-common": "workspace:^",
+    "@ansible/portal-hello-world-common": "workspace:^",
     "@backstage/core-compat-api": "0.5.11",
     "@backstage/core-components": "^0.18.8",
     "@backstage/frontend-plugin-api": "0.17.1",
