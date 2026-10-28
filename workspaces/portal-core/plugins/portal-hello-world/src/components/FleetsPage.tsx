@@ -2,86 +2,89 @@ import {
   Content,
   Header,
   Page,
-  StatusOK,
   StatusPending,
-  StatusRunning,
-  StatusWarning,
   Table,
   type TableColumn,
 } from '@backstage/core-components';
 import {
-  EDGE_FLEETS,
-  type EdgeFleet,
-  type EdgeUpdateState,
-} from './fleetDemoData';
+  DeviceSummaryStatusType,
+  type Fleet,
+} from '@ansible/portal-hello-world-common';
+import { FLEET_LIST } from './fleetDemoData';
 
-function OsUpdateStatus({ state }: { state: EdgeUpdateState }) {
-  switch (state) {
-    case 'up-to-date':
-      return <StatusOK>Up to date</StatusOK>;
-    case 'available':
-      return <StatusWarning>Update available</StatusWarning>;
-    case 'scheduled':
-      return <StatusPending>Scheduled</StatusPending>;
-    case 'updating':
-      return <StatusRunning>Updating</StatusRunning>;
-    default: {
-      const exhaustiveCheck: never = state;
-      return exhaustiveCheck;
-    }
+// CELIA-WIP: translations??
+
+const devicesOnline = (fleet: Fleet) => {
+  const summary = fleet.status?.devicesSummary;
+  if (!summary) {
+    // CELIA-WIP: Discuss the UX for a missing addDevicesSummary response.
+    return <StatusPending>WIP</StatusPending>;
   }
-}
 
-const columns: TableColumn<EdgeFleet>[] = [
+  const online =
+    summary.summaryStatus[DeviceSummaryStatusType.DeviceSummaryStatusOnline] ??
+    0;
+  return `${online}/${summary.total} online`;
+};
+
+const desiredSystemImage = (fleet: Fleet): string => {
+  const os = fleet.spec.template.spec.os;
+  if (os?.image) return os.image;
+  if (os?.catalogItemRef) {
+    const { catalog, item, version } = os.catalogItemRef;
+    return `${catalog}/${item}:${version}`;
+  }
+  return 'No system image configured';
+};
+
+const columns: TableColumn<Fleet>[] = [
   {
     title: 'Fleet',
-    field: 'name',
+    field: 'metadata.name',
     highlight: true,
-    render: fleet => (
-      <div>
-        <strong>{fleet.name}</strong>
-        <br />
-        <small>{fleet.description}</small>
-      </div>
-    ),
+    render: fleet => <strong>{fleet.metadata.name as string}</strong>,
   },
   {
     title: 'Devices',
-    field: 'devicesOnline',
-    render: fleet => `${fleet.devicesOnline}/${fleet.devicesTotal} online`,
+    render: fleet => devicesOnline(fleet),
   },
   {
     title: 'Operating system',
-    field: 'osLabel',
     render: fleet => (
       <div>
-        <OsUpdateStatus state={fleet.osUpdateState} />
+        <div>{desiredSystemImage(fleet)}</div>
+        <small>Current version: WIP</small>
+        <br />
+        <small>Available version: WIP</small>
         <div>
-          {fleet.osLabel} {fleet.currentVersion}
-          {fleet.availableVersion && ` → ${fleet.availableVersion}`}
+          Update state: <StatusPending>WIP</StatusPending>
         </div>
-        {fleet.osRolloutProgress && <small>{fleet.osRolloutProgress}</small>}
+        <small>Rollout progress: WIP</small>
+        <br />
+        <small>OS source: WIP</small>
       </div>
     ),
   },
 ];
 
-export function FleetsPage() {
+const FleetsPage = () => {
   return (
     <Page themeId="app">
       <Header
         title="Edge fleets"
-        subtitle={`Showing ${EDGE_FLEETS.length} fleets. Review device connectivity and operating system update status.`}
+        subtitle={`Showing ${FLEET_LIST.items.length} fleets. Device versions, rollout details, and OS source are marked WIP.`}
         pageTitleOverride="Edge fleets"
       />
       <Content>
-        <Table<EdgeFleet>
+        <Table<Fleet>
           title=""
           options={{ paging: false, search: true }}
           columns={columns}
-          data={EDGE_FLEETS}
+          data={FLEET_LIST.items}
         />
       </Content>
     </Page>
   );
-}
+};
+
+export default FleetsPage;

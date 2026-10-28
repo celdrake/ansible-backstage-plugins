@@ -17,6 +17,7 @@ async function readFlightctlFleets(options: {
 }): Promise<{ status: number; body: unknown }> {
   const url = new URL('/api/v1/fleets', options.apiBaseUrl);
   url.searchParams.set('org_id', options.organizationId);
+  url.searchParams.set('addDevicesSummary', 'true');
 
   if (url.protocol !== 'https:') {
     throw new Error('The Flightctl API URL must use HTTPS.');

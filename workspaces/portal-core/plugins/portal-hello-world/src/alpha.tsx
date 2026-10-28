@@ -34,7 +34,9 @@ export default createFrontendPlugin({
         icon: <RouterIcon />,
         noHeader: true,
         loader: async () => {
-          const { FleetsPage } = await import('./components/FleetsPage');
+          const { default: FleetsPage } = await import(
+            './components/FleetsPage'
+          );
           return compatWrapper(<FleetsPage />);
         },
       },
