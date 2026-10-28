@@ -4,6 +4,7 @@ import {
 } from '@backstage/frontend-plugin-api';
 import { compatWrapper } from '@backstage/core-compat-api';
 import ExtensionIcon from '@material-ui/icons/Extension';
+import RouterIcon from '@material-ui/icons/Router';
 import { EntityDetailTabBlueprint } from '@ansible/portal-extension-api/alpha';
 import { helloWorldManifest } from './manifest';
 
@@ -22,6 +23,19 @@ export default createFrontendPlugin({
             './components/HelloWorldPage'
           );
           return compatWrapper(<HelloWorldPage />);
+        },
+      },
+    }),
+    PageBlueprint.make({
+      name: 'edge-fleets',
+      params: {
+        path: '/edge-fleets',
+        title: 'Edge Fleets',
+        icon: <RouterIcon />,
+        noHeader: true,
+        loader: async () => {
+          const { FleetsPage } = await import('./components/FleetsPage');
+          return compatWrapper(<FleetsPage />);
         },
       },
     }),
