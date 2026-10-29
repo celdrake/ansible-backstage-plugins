@@ -1,9 +1,9 @@
 # Portal Hello World common types
 
 This package holds the Flightctl API model types shared by the Hello World
-frontend and backend PoC. The initial snapshot is copied from the generated
-core API models in `flightctl-ui/libs/types`. The upstream package uses
-`openapi-typescript-codegen`.
+frontend and backend PoC. The core models and selected alpha models are copied
+from the generated types in `flightctl-ui/libs/types`. The upstream package
+uses `openapi-typescript-codegen`.
 
 **CELIA-WIP:** Type generation must be automated and improved. Add a
 reproducible generator that consumes a version-pinned Flightctl OpenAPI schema,

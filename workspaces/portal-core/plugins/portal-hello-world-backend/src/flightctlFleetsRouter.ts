@@ -5,20 +5,27 @@ import type {
 import type { Config } from '@backstage/config';
 import { AuthenticationError } from '@backstage/errors';
 import type { IAAPService } from '@ansible/backstage-rhaap-common';
+import type { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
 import * as https from 'node:https';
 import express from 'express';
 import { readUserOrganizations } from './aapApiExampleRouter';
 
-async function readFlightctlFleets(options: {
+type FlightctlRequestOptions = {
   apiBaseUrl: string;
-  organizationId: string;
   accessToken: string;
+  organizationId: string;
   skipTlsVerify: boolean;
-}): Promise<{ status: number; body: unknown }> {
-  const url = new URL('/api/v1/fleets', options.apiBaseUrl);
-  url.searchParams.set('org_id', options.organizationId);
-  url.searchParams.set('addDevicesSummary', 'true');
+};
 
+const MAX_FLEET_NAMES_PER_SELECTOR = 100;
+const MAX_FLEET_NAME_LENGTH = 253;
+const FLEET_NAME_PATTERN =
+  /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/;
+
+async function flightctlApiCall(
+  url: URL,
+  options: FlightctlRequestOptions,
+): Promise<{ status: number; body: unknown }> {
   if (url.protocol !== 'https:') {
     throw new Error('The Flightctl API URL must use HTTPS.');
   }
@@ -62,6 +69,74 @@ async function readFlightctlFleets(options: {
   });
 }
 
+// Retrieves the fleets.
+async function fetchFleets(
+  options: FlightctlRequestOptions,
+): Promise<{ status: number; body: unknown }> {
+  const url = new URL('/api/v1/fleets', options.apiBaseUrl);
+  url.searchParams.set('org_id', options.organizationId);
+  url.searchParams.set('addDevicesSummary', 'true');
+
+  return flightctlApiCall(url, options);
+}
+
+// Retrieves the catalog items associated to the given fleet names.
+async function fetchCatalogItems(
+  config: Config,
+  options: FlightctlRequestOptions,
+  fleetNames: string[],
+): Promise<{ status: number; body: unknown }> {
+  const apiBaseUrl = config.getOptionalString(
+    'ansible.hello-world.flightctl.apiBaseUrl',
+  );
+  const organizationId = config
+    .getOptionalString('ansible.hello-world.flightctl.organizationId')
+    ?.trim();
+
+  const url = new URL('/api/v1/catalogitems', options.apiBaseUrl);
+  url.searchParams.set('org_id', options.organizationId);
+  url.searchParams.set('fieldSelector', `fleet in (${fleetNames.join(',')})`);
+
+  const result = await flightctlApiCall(url, options);
+  if (result.status < 200 || result.status >= 300) {
+    return result;
+  }
+
+  const list = result.body as CatalogItemList;
+  if (!list || typeof list !== 'object' || !Array.isArray(list.items)) {
+    return {
+      status: 502,
+      body: { error: 'Flightctl returned an invalid catalog item list.' },
+    };
+  }
+
+  return result;
+}
+
+function readFleetNames(req: express.Request): string[] | undefined {
+  const rawValues = Array.isArray(req.query.fleet)
+    ? req.query.fleet
+    : [req.query.fleet];
+  const values = rawValues.filter(
+    (value): value is string => typeof value === 'string',
+  );
+
+  const uniqueValues = Array.from(new Set(values));
+  if (
+    values.length === 0 ||
+    values.length !== rawValues.length ||
+    uniqueValues.length > MAX_FLEET_NAMES_PER_SELECTOR ||
+    values.some(
+      name =>
+        name.length > MAX_FLEET_NAME_LENGTH || !FLEET_NAME_PATTERN.test(name),
+    )
+  ) {
+    return undefined;
+  }
+
+  return uniqueValues;
+}
+
 export function createFlightctlFleetsRouter(options: {
   httpAuth: HttpAuthService;
   userInfo: UserInfoService;
@@ -90,9 +165,60 @@ export function createFlightctlFleetsRouter(options: {
         ...options,
         req,
       });
-      const result = await readFlightctlFleets({
+      const result = await fetchFleets({
         apiBaseUrl,
         organizationId,
+        accessToken,
+        skipTlsVerify:
+          options.config.getOptionalBoolean(
+            'ansible.hello-world.flightctl.skipTlsVerify',
+          ) ?? false,
+      });
+      res.status(result.status).json(result.body);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to call the Flightctl API.';
+      const status = error instanceof AuthenticationError ? 401 : 502;
+      res.status(status).json({ error: message });
+    }
+  });
+
+  router.get('/catalogitems', async (req, res) => {
+    const fleetNames = readFleetNames(req);
+    if (!fleetNames) {
+      res.status(400).json({
+        error:
+          'Provide between 1 and 100 valid fleet query parameters for a catalog item request.',
+      });
+      return;
+    }
+
+    const apiBaseUrl = options.config.getOptionalString(
+      'ansible.hello-world.flightctl.apiBaseUrl',
+    );
+    const organizationId = options.config
+      .getOptionalString('ansible.hello-world.flightctl.organizationId')
+      ?.trim();
+    if (!apiBaseUrl || !organizationId) {
+      res.status(500).json({
+        error:
+          'Configure ansible.hello-world.flightctl.apiBaseUrl and organizationId.',
+      });
+      return;
+    }
+
+    try {
+      const { accessToken } = await readUserOrganizations({
+        ...options,
+        req,
+      });
+      const result = await fetchCatalogItems({
+        options,
+        apiBaseUrl,
+        organizationId,
+        fleetNames,
         accessToken,
         skipTlsVerify:
           options.config.getOptionalBoolean(

@@ -29,6 +29,7 @@
     "@backstage/core-compat-api": "0.5.11",
     "@backstage/core-components": "^0.18.8",
     "@backstage/frontend-plugin-api": "0.17.1",
+    "@backstage/ui": "^0.16.x",
     "@material-ui/icons": "^4.9.1"
   },
   "peerDependencies": {

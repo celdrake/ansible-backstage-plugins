@@ -27,15 +27,15 @@ export default createFrontendPlugin({
       },
     }),
     PageBlueprint.make({
-      name: 'edge-fleets',
+      name: 'edge-fleets-poc',
       params: {
-        path: '/edge-fleets',
+        path: '/edge-fleets-poc',
         title: 'Edge Fleets',
         icon: <RouterIcon />,
         noHeader: true,
         loader: async () => {
           const { default: FleetsPage } = await import(
-            './components/FleetsPage'
+            './components/Fleets/FleetsPage'
           );
           return compatWrapper(<FleetsPage />);
         },
