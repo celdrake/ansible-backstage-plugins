@@ -11,7 +11,9 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { type Fleet } from '@ansible/portal-hello-world-common';
-import useFleetList from '../../hooks/useFleetList';
+import useFleetList, {
+  type SuccessFleetListState,
+} from '../../hooks/useFleetList';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import { FleetHealth, FleetOs, FleetDevicesCount } from './FleetRowColumns';
 
@@ -26,6 +28,9 @@ import '@backstage/ui/css/styles.css';
 
 // CELIA-WIP: This should be a constant in the config.
 const rhemUrl = 'https://edge-manager.redhat.com';
+
+// Avoid error in the console by providing a custom renderer for actions.
+const NoMaterialTableActions = () => null;
 
 const NumberBox = ({ number, label }: { number: number; label: string }) => {
   return (
@@ -59,15 +64,16 @@ const FleetsPageSummary = ({
   );
 };
 
-const FleetsPage = () => {
-  const { fleets, totalOfflineDevices } = useFleetList();
+const FleetsPageContent = ({
+  fleetListState,
+}: {
+  fleetListState: SuccessFleetListState;
+}) => {
+  const { fleets, totalOfflineDevices } = fleetListState;
   const fleetNames = fleets.map(fleet => fleet.metadata.name as string);
   const catalogItemsState = useFleetCatalogItems(fleetNames);
 
-  const [showLink, setShowLink] = React.useState(true);
-
-  // CELIA-WIP: First show the main content, then show the catalogContent when it's available.
-  // talk to Paola about how to render this loading state.
+  // CELIA-WIP: talk to Paola about how to render the different loading states.
   const columns = React.useMemo<TableColumn<Fleet>[]>(
     () => [
       {
@@ -103,6 +109,50 @@ const FleetsPage = () => {
   );
 
   return (
+    <Content>
+      <Box>
+        <FleetsPageSummary
+          fleetCount={fleets.length}
+          offlineDevicesCount={totalOfflineDevices}
+        />
+        <Table<Fleet>
+          title=""
+          components={{ Actions: NoMaterialTableActions }}
+          options={{ paging: false, search: true }}
+          columns={columns}
+          data={fleets}
+        />
+      </Box>
+    </Content>
+  );
+};
+
+const FleetsPage = () => {
+  const fleetListState = useFleetList();
+  const [showRhemLink, setShowRhemLink] = React.useState(true);
+
+  let content;
+  if (fleetListState.status === 'loading') {
+    content = (
+      <Text variant="body-medium" color="secondary">
+        Loading fleets…
+      </Text>
+    );
+  } else if (fleetListState.status === 'error') {
+    content = (
+      <Alert
+        status="danger"
+        title="Unable to load fleets"
+        description={fleetListState.message}
+        icon
+        mb="4"
+      />
+    );
+  } else {
+    content = <FleetsPageContent fleetListState={fleetListState} />;
+  }
+
+  return (
     <Page themeId="app">
       <Header
         pageTitleOverride="Edge fleets"
@@ -118,7 +168,7 @@ const FleetsPage = () => {
           </Box>
         }
         subtitle={
-          showLink ? (
+          showRhemLink && (
             <Alert
               status="info"
               title="Monitor fleet health and apply catalog updates from here. Enroll new devices and change fleet configuration in Edge Manager."
@@ -130,36 +180,16 @@ const FleetsPage = () => {
                   </Flex>
                 </Link>
               }
-              customActions={[<CloseIcon onClick={() => setShowLink(false)} />]}
+              customActions={
+                <CloseIcon onClick={() => setShowRhemLink(false)} />
+              }
               icon
               mt="4"
             />
-          ) : null
+          )
         }
       />
-      <Content>
-        <Box>
-          {catalogItemsState.status === 'error' && (
-            <Alert
-              status="danger"
-              title="Unable to load OS catalog items"
-              description={catalogItemsState.message}
-              icon
-              mb="4"
-            />
-          )}
-          <FleetsPageSummary
-            fleetCount={fleets.length}
-            offlineDevicesCount={totalOfflineDevices}
-          />
-          <Table<Fleet>
-            title=""
-            options={{ paging: false, search: true }}
-            columns={columns}
-            data={fleets}
-          />
-        </Box>
-      </Content>
+      {content}
     </Page>
   );
 };

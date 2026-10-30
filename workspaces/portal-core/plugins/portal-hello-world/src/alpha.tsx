@@ -17,7 +17,7 @@ export default createFrontendPlugin({
         noHeader: true,
         loader: async () => {
           const { default: FleetsPage } = await import(
-            './components/Fleets/FleetsPage'
+            './components/FleetsPage/FleetsPage'
           );
           return compatWrapper(<FleetsPage />);
         },

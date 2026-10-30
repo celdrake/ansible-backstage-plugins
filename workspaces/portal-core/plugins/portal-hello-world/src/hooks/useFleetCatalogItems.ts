@@ -6,15 +6,8 @@ import {
   useApi,
 } from '@backstage/core-plugin-api';
 import { rhAapAuthApiRef } from '@ansible/aap-app-auth';
-import type {
-  CatalogItem,
-  CatalogItemList,
-} from '@ansible/portal-hello-world-common/alpha';
-
-export type FleetCatalogItemsState =
-  | { status: 'loading' }
-  | { status: 'loaded'; catalogItems: CatalogItem[] }
-  | { status: 'error'; message: string };
+import type { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
+import { FleetCatalogItemsState } from '../components/FleetsPage/types';
 
 async function readError(response: Response): Promise<string> {
   const body = await response.text();

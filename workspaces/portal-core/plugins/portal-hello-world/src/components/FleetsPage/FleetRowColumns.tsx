@@ -5,31 +5,14 @@ import {
 } from '@ansible/portal-hello-world-common';
 import { StatusPending } from '@backstage/core-components';
 import { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
+import { getFleetCatalogItem } from '../../utils/catalogItems';
+import { FleetCatalogItemsState } from './types';
 
 import FleetStatus from './FleetStatus';
 
 export const FleetHealth = ({ fleet }: { fleet: Fleet }) => {
   return <FleetStatus fleetStatus={fleet.status} />;
 };
-
-// CELIA-WIP: MAKE IT IN A UTILS MODULE
-const getFleetCatalogItem = (fleet: Fleet, catalogItems: CatalogItem[]) => {
-  const osRef = fleet.spec.template.spec.os?.catalogItemRef;
-  if (!osRef) {
-    return undefined;
-  }
-  return catalogItems.find(
-    item =>
-      item.metadata.name === osRef.item &&
-      item.metadata.catalog === osRef.catalog,
-  );
-};
-
-// CELIA-WIP: This is a temporary type to avoid importing the hook. Make it reusable
-export type FleetCatalogItemsState =
-  | { status: 'loading' }
-  | { status: 'loaded'; catalogItems: CatalogItem[] }
-  | { status: 'error'; message: string };
 
 const FleetCatalogOs = ({
   osSpec,
