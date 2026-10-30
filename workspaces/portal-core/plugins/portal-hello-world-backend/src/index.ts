@@ -34,7 +34,6 @@ export default createBackendPlugin({
         router.use(
           createAapApiExampleRouter({
             httpAuth,
-            userInfo,
             ansibleService,
             config,
           }),
@@ -42,7 +41,6 @@ export default createBackendPlugin({
         router.use(
           createFlightctlFleetsRouter({
             httpAuth,
-            userInfo,
             ansibleService,
             config,
           }),

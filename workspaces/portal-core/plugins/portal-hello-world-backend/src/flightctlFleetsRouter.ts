@@ -1,7 +1,4 @@
-import type {
-  HttpAuthService,
-  UserInfoService,
-} from '@backstage/backend-plugin-api';
+import type { HttpAuthService } from '@backstage/backend-plugin-api';
 import type { Config } from '@backstage/config';
 import { AuthenticationError } from '@backstage/errors';
 import type { IAAPService } from '@ansible/backstage-rhaap-common';
@@ -16,6 +13,9 @@ type FlightctlRequestOptions = {
   organizationId: string;
   skipTlsVerify: boolean;
 };
+
+// Temporary AAP-to-Flightctl organization mapping until the mapping API exists.
+const FLIGHTCTL_AAP_ORGANIZATION_ID = '1';
 
 const MAX_FLEET_NAMES_PER_SELECTOR = 100;
 const MAX_FLEET_NAME_LENGTH = 253;
@@ -82,17 +82,9 @@ async function fetchFleets(
 
 // Retrieves the catalog items associated to the given fleet names.
 async function fetchCatalogItems(
-  config: Config,
   options: FlightctlRequestOptions,
   fleetNames: string[],
 ): Promise<{ status: number; body: unknown }> {
-  const apiBaseUrl = config.getOptionalString(
-    'ansible.hello-world.flightctl.apiBaseUrl',
-  );
-  const organizationId = config
-    .getOptionalString('ansible.hello-world.flightctl.organizationId')
-    ?.trim();
-
   const url = new URL('/api/v1/catalogitems', options.apiBaseUrl);
   url.searchParams.set('org_id', options.organizationId);
   url.searchParams.set('fieldSelector', `fleet in (${fleetNames.join(',')})`);
@@ -139,7 +131,6 @@ function readFleetNames(req: express.Request): string[] | undefined {
 
 export function createFlightctlFleetsRouter(options: {
   httpAuth: HttpAuthService;
-  userInfo: UserInfoService;
   ansibleService: IAAPService;
   config: Config;
 }): express.Router {
@@ -161,13 +152,26 @@ export function createFlightctlFleetsRouter(options: {
     }
 
     try {
-      const { accessToken } = await readUserOrganizations({
+      const { accessToken, organizations } = await readUserOrganizations({
         ...options,
         req,
+        organizationMappings: new Map([
+          [FLIGHTCTL_AAP_ORGANIZATION_ID, organizationId],
+        ]),
       });
+      const organization = organizations.find(
+        item => item.externalOrgId === FLIGHTCTL_AAP_ORGANIZATION_ID,
+      );
+      if (!organization?.internalOrgId) {
+        res.status(403).json({
+          error:
+            'The AAP user does not have access to the configured Flightctl organization.',
+        });
+        return;
+      }
       const result = await fetchFleets({
         apiBaseUrl,
-        organizationId,
+        organizationId: organization.internalOrgId,
         accessToken,
         skipTlsVerify:
           options.config.getOptionalBoolean(
@@ -210,21 +214,35 @@ export function createFlightctlFleetsRouter(options: {
     }
 
     try {
-      const { accessToken } = await readUserOrganizations({
+      const { accessToken, organizations } = await readUserOrganizations({
         ...options,
         req,
+        organizationMappings: new Map([
+          [FLIGHTCTL_AAP_ORGANIZATION_ID, organizationId],
+        ]),
       });
-      const result = await fetchCatalogItems({
-        options,
-        apiBaseUrl,
-        organizationId,
+      const organization = organizations.find(
+        item => item.externalOrgId === FLIGHTCTL_AAP_ORGANIZATION_ID,
+      );
+      if (!organization?.internalOrgId) {
+        res.status(403).json({
+          error:
+            'The AAP user does not have access to the configured Flightctl organization.',
+        });
+        return;
+      }
+      const result = await fetchCatalogItems(
+        {
+          apiBaseUrl,
+          organizationId: organization.internalOrgId,
+          accessToken,
+          skipTlsVerify:
+            options.config.getOptionalBoolean(
+              'ansible.hello-world.flightctl.skipTlsVerify',
+            ) ?? false,
+        },
         fleetNames,
-        accessToken,
-        skipTlsVerify:
-          options.config.getOptionalBoolean(
-            'ansible.hello-world.flightctl.skipTlsVerify',
-          ) ?? false,
-      });
+      );
       res.status(result.status).json(result.body);
     } catch (error) {
       const message =

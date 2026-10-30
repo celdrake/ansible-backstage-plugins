@@ -1,11 +1,7 @@
-import type {
-  HttpAuthService,
-  UserInfoService,
-} from '@backstage/backend-plugin-api';
+import type { HttpAuthService } from '@backstage/backend-plugin-api';
 import type { Config } from '@backstage/config';
 import { AuthenticationError } from '@backstage/errors';
 import type { IAAPService } from '@ansible/backstage-rhaap-common';
-import { toUserEntityRef } from '@ansible/backstage-rhaap-common';
 import express from 'express';
 
 type AapOrganization = {
@@ -38,25 +34,12 @@ function readOrganizationMappings(config: Config): Map<string, string> {
   return mappings;
 }
 
-function isMultiOrgEnabled(config: Config): boolean {
-  const providers = config.getOptionalConfig('catalog.providers.rhaap');
-  return (
-    providers
-      ?.keys()
-      .some(
-        key =>
-          providers.getConfig(key).getOptionalBoolean('multiOrgEnabled') ===
-          true,
-      ) ?? false
-  );
-}
-
 export async function readUserOrganizations(options: {
   req: express.Request;
   httpAuth: HttpAuthService;
-  userInfo: UserInfoService;
   ansibleService: IAAPService;
   config: Config;
+  organizationMappings?: ReadonlyMap<string, string>;
 }): Promise<{ accessToken: string; organizations: AapOrganization[] }> {
   const accessToken = readAapToken(options.req);
   if (!accessToken) {
@@ -65,31 +48,15 @@ export async function readUserOrganizations(options: {
     );
   }
 
-  const credentials = await options.httpAuth.credentials(
+  await options.httpAuth.credentials(
     options.req as unknown as Parameters<HttpAuthService['credentials']>[0],
     { allow: ['user'] },
   );
-  const backstageUser = await options.userInfo.getUserInfo(credentials);
   const profile = await options.ansibleService.fetchProfile(accessToken);
   const aapUserId = Number(profile.id);
 
-  if (
-    !profile.username ||
-    !Number.isSafeInteger(aapUserId) ||
-    aapUserId < 1
-  ) {
+  if (!profile.username || !Number.isSafeInteger(aapUserId) || aapUserId < 1) {
     throw new AuthenticationError('AAP returned an invalid user profile.');
-  }
-
-  const expectedUserRef = toUserEntityRef(profile.username, aapUserId, {
-    multiOrgEnabled: isMultiOrgEnabled(options.config),
-  });
-  if (
-    backstageUser.userEntityRef.toLowerCase() !== expectedUserRef.toLowerCase()
-  ) {
-    throw new AuthenticationError(
-      'The AAP session does not match the signed-in Backstage user.',
-    );
   }
 
   const response = await options.ansibleService.executeGetRequest(
@@ -105,7 +72,8 @@ export async function readUserOrganizations(options: {
   } else {
     results = [];
   }
-  const mappings = readOrganizationMappings(options.config);
+  const mappings =
+    options.organizationMappings ?? readOrganizationMappings(options.config);
 
   const organizations = results
     .filter(
@@ -125,7 +93,6 @@ export async function readUserOrganizations(options: {
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
-
   return { accessToken, organizations };
 }
 
@@ -169,7 +136,6 @@ async function sendAapApiRequest(options: {
 
 export function createAapApiExampleRouter(options: {
   httpAuth: HttpAuthService;
-  userInfo: UserInfoService;
   ansibleService: IAAPService;
   config: Config;
 }): express.Router {
@@ -206,8 +172,7 @@ export function createAapApiExampleRouter(options: {
       );
       if (!organization) {
         res.status(403).json({
-          error:
-            'The selected AAP organization is not available to this user.',
+          error: 'The selected AAP organization is not available to this user.',
         });
         return;
       }
@@ -241,7 +206,9 @@ export function createAapApiExampleRouter(options: {
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to call the application API.';
+        error instanceof Error
+          ? error.message
+          : 'Failed to call the application API.';
       const status = error instanceof AuthenticationError ? 401 : 502;
       res.status(status).json({ error: message });
     }
