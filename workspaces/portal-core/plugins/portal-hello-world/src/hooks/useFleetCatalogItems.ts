@@ -1,108 +1,48 @@
-import { useEffect, useState } from 'react';
-import {
-  discoveryApiRef,
-  fetchApiRef,
-  identityApiRef,
-  useApi,
-} from '@backstage/core-plugin-api';
-import { rhAapAuthApiRef } from '@ansible/aap-app-auth';
+import { useCallback } from 'react';
 import type { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
-import { FleetCatalogItemsState } from '../components/FleetsPage/types';
+import type { FleetCatalogItemsState } from '../components/FleetsPage/types';
+import useFetchPeriodically from './useFetchPeriodically';
+import useHelloWorldApi from './useHelloWorldApi';
 
-async function readError(response: Response): Promise<string> {
-  const body = await response.text();
-  if (!body) return `Request failed (${response.status}).`;
-  try {
-    const parsed = JSON.parse(body) as {
-      error?: unknown;
-      message?: unknown;
-    };
-    if (typeof parsed.error === 'string') return parsed.error;
-    if (typeof parsed.message === 'string') return parsed.message;
-  } catch {
-    // Keep plain-text API errors readable.
-  }
-  return body;
-}
-
-const useFleetCatalogItems = (fleetNames: string[]) => {
-  const discoveryApi = useApi(discoveryApiRef);
-  const fetchApi = useApi(fetchApiRef);
-  const identityApi = useApi(identityApiRef);
-  const aapAuthApi = useApi(rhAapAuthApiRef);
+const useFleetCatalogItems = (fleetNames: string[]): FleetCatalogItemsState => {
+  const fetchJson = useHelloWorldApi();
   const fleetNamesKey = fleetNames.join('\u0000');
-  const [state, setState] = useState<FleetCatalogItemsState>({
-    status: 'loading',
+  const hasFleetNames = fleetNames.length > 0;
+
+  const fetchCatalogItems = useCallback(
+    async (signal: AbortSignal) => {
+      const query = new URLSearchParams();
+      fleetNamesKey
+        .split('\u0000')
+        .forEach(name => query.append('fleet', name));
+      const catalogItemList = await fetchJson<CatalogItemList>(
+        `/catalogitems?${query.toString()}`,
+        signal,
+        'OS catalog items',
+      );
+      if (!catalogItemList || !Array.isArray(catalogItemList.items)) {
+        throw new Error(
+          'The backend returned an invalid Flightctl catalog item list.',
+        );
+      }
+      return catalogItemList.items;
+    },
+    [fetchJson, fleetNamesKey],
+  );
+  const periodicState = useFetchPeriodically(fetchCatalogItems, {
+    enabled: hasFleetNames,
   });
 
-  useEffect(() => {
-    let active = true;
-    const fleetNames = fleetNamesKey ? fleetNamesKey.split('\u0000') : [];
-
-    if (fleetNames.length === 0) {
-      setState({ status: 'loaded', catalogItems: [] });
-      return () => {
-        active = false;
-      };
-    }
-
-    async function loadCatalogItems() {
-      try {
-        setState({ status: 'loading' });
-        const { token: backstageToken } = await identityApi.getCredentials();
-        if (!backstageToken) {
-          throw new Error(
-            'Sign in to Backstage before loading OS catalog items.',
-          );
-        }
-
-        const aapAccessToken = await aapAuthApi.getAccessToken();
-        if (!aapAccessToken) {
-          throw new Error(
-            'Sign in with the RH AAP provider to load OS catalog items.',
-          );
-        }
-
-        const baseUrl = await discoveryApi.getBaseUrl('hello-world');
-        const query = new URLSearchParams();
-        fleetNames.forEach(name => query.append('fleet', name));
-        const response = await fetchApi.fetch(
-          `${baseUrl}/catalogitems?${query.toString()}`,
-          {
-            headers: {
-              Authorization: `Bearer ${backstageToken}`,
-              'X-RHAAP-Access-Token': aapAccessToken,
-            },
-          },
-        );
-        if (!response.ok) throw new Error(await readError(response));
-
-        const catalogItemList = (await response.json()) as CatalogItemList;
-        if (!catalogItemList || !Array.isArray(catalogItemList.items)) {
-          throw new Error(
-            'The backend returned an invalid Flightctl catalog item list.',
-          );
-        }
-        if (active) {
-          setState({ status: 'loaded', catalogItems: catalogItemList.items });
-        }
-      } catch (error) {
-        if (active) {
-          setState({
-            status: 'error',
-            message: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-    }
-
-    void loadCatalogItems();
-    return () => {
-      active = false;
-    };
-  }, [aapAuthApi, discoveryApi, fetchApi, fleetNamesKey, identityApi]);
-
-  return state;
+  if (!hasFleetNames) {
+    return { status: 'loaded', catalogItems: [] };
+  }
+  if (periodicState.data) {
+    return { status: 'loaded', catalogItems: periodicState.data };
+  }
+  if (periodicState.error) {
+    return { status: 'error', message: periodicState.error.message };
+  }
+  return { status: 'loading' };
 };
 
 export default useFleetCatalogItems;

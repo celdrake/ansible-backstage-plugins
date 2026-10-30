@@ -91,7 +91,7 @@ const FleetsPageContent = ({
         render: fleet => <FleetDevicesCount fleet={fleet} />,
       },
       {
-        title: 'Catalog',
+        title: 'Operating System',
         render: fleet => (
           <FleetOs fleet={fleet} catalogItemState={catalogItemsState} />
         ),

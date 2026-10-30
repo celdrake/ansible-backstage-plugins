@@ -1,11 +1,17 @@
 import {
+  CatalogItemRefSpec,
   DeviceOsSpec,
   DeviceSummaryStatusType,
   Fleet,
 } from '@ansible/portal-hello-world-common';
 import { StatusPending } from '@backstage/core-components';
 import { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
-import { getFleetCatalogItem } from '../../utils/catalogItems';
+import { Badge, Flex } from '@backstage/ui';
+import {
+  getCatalogItemUpdates,
+  getFleetCatalogItem,
+  getOsCatalogDisplayText,
+} from '../../utils/catalogItems';
 import { FleetCatalogItemsState } from './types';
 
 import FleetStatus from './FleetStatus';
@@ -15,13 +21,26 @@ export const FleetHealth = ({ fleet }: { fleet: Fleet }) => {
 };
 
 const FleetCatalogOs = ({
-  osSpec,
+  catalogItemRef,
   catalogItem,
 }: {
-  osSpec: DeviceOsSpec | undefined;
+  catalogItemRef: CatalogItemRefSpec;
   catalogItem: CatalogItem | undefined;
 }) => {
-  return <div>{catalogItem?.spec.displayName ?? 'OS not configured'}</div>;
+  const hasUpdates =
+    !!catalogItem &&
+    getCatalogItemUpdates(
+      catalogItem,
+      catalogItemRef.channel,
+      catalogItemRef.version,
+    ).length > 0;
+
+  return (
+    <Flex align="center" gap="2">
+      <span>{getOsCatalogDisplayText(catalogItemRef)}</span>
+      {hasUpdates && <Badge size="small">Update available</Badge>}
+    </Flex>
+  );
 };
 
 export const FleetOs = ({
@@ -42,10 +61,19 @@ export const FleetOs = ({
 
   const osSpec = fleet.spec.template.spec.os;
   if (!osSpec || !osSpec.catalogItemRef) {
-    return <div>{osSpec?.image ?? 'OS not configured'}</div>;
+    return (
+      <div style={{ border: '2px solid lime' }}>
+        {osSpec?.image ?? 'OS not configured'}
+      </div>
+    );
   }
   const catalogItem = getFleetCatalogItem(fleet, catalogItemState.catalogItems);
-  return <FleetCatalogOs osSpec={osSpec} catalogItem={catalogItem} />;
+  return (
+    <FleetCatalogOs
+      catalogItem={catalogItem}
+      catalogItemRef={osSpec.catalogItemRef}
+    />
+  );
 };
 
 export const FleetDevicesCount = ({ fleet }: { fleet: Fleet }) => {

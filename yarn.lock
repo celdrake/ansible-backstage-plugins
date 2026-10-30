@@ -744,8 +744,10 @@ __metadata:
     "@backstage/ui": "npm:^0.16.x"
     "@material-ui/icons": "npm:^4.9.1"
     "@types/react": "npm:^18"
+    "@types/semver": "npm:^7"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
+    semver: "npm:^7.7.3"
   peerDependencies:
     "@backstage/core-plugin-api": ^1.12.4
     react: ^18.3.1
