@@ -11,7 +11,6 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { type Fleet } from '@ansible/portal-hello-world-common';
-import type { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
 import useFleetList from '../../hooks/useFleetList';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import { FleetHealth, FleetOs, FleetDevicesCount } from './FleetRowColumns';
@@ -21,9 +20,6 @@ import '@backstage/ui/css/styles.css';
 // CELIA-WIP: translations??
 // CELIA-WIP: pagination
 // CELIA-WIP: which fleets are fetched? which order?
-
-const catalogItemKey = (catalog: string, item: string) =>
-  `${catalog}\u0000${item}`;
 
 // CELIA-WIP: Is banner dismissable forever?
 // What are the rules to dismiss it?
@@ -69,22 +65,9 @@ const FleetsPage = () => {
   const catalogItemsState = useFleetCatalogItems(fleetNames);
 
   const [showLink, setShowLink] = React.useState(true);
-  const catalogItems =
-    catalogItemsState.status === 'loaded' ? catalogItemsState.catalogItems : [];
-  const catalogItemsByRef = React.useMemo(() => {
-    const byRef = new Map<string, CatalogItem>();
-    catalogItems.forEach(catalogItem => {
-      const name = catalogItem.metadata.name;
-      if (name) {
-        byRef.set(
-          catalogItemKey(catalogItem.metadata.catalog, name),
-          catalogItem,
-        );
-      }
-    });
-    return byRef;
-  }, [catalogItems]);
 
+  // CELIA-WIP: First show the main content, then show the catalogContent when it's available.
+  // talk to Paola about how to render this loading state.
   const columns = React.useMemo<TableColumn<Fleet>[]>(
     () => [
       {
@@ -103,19 +86,9 @@ const FleetsPage = () => {
       },
       {
         title: 'Catalog',
-        render: fleet => {
-          const ref = fleet.spec.template.spec.os?.catalogItemRef;
-          const catalogItem = ref
-            ? catalogItemsByRef.get(catalogItemKey(ref.catalog, ref.item))
-            : undefined;
-          return (
-            <FleetOs
-              fleet={fleet}
-              catalogItem={catalogItem}
-              catalogItemsLoading={catalogItemsState.status === 'loading'}
-            />
-          );
-        },
+        render: fleet => (
+          <FleetOs fleet={fleet} catalogItemState={catalogItemsState} />
+        ),
       },
       {
         title: 'Maintenance window',
@@ -126,7 +99,7 @@ const FleetsPage = () => {
         render: _fleet => 'WIP',
       },
     ],
-    [catalogItemsByRef, catalogItemsState.status],
+    [catalogItemsState],
   );
 
   return (

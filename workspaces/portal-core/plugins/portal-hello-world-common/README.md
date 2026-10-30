@@ -1,6 +1,6 @@
-# Portal Hello World common types
+# Edge Fleets common types
 
-This package holds the Flightctl API model types shared by the Hello World
+This package holds the Flightctl API model types shared by the Edge Fleets
 frontend and backend PoC. The core models and selected alpha models are copied
 from the generated types in `flightctl-ui/libs/types`. The upstream package
 uses `openapi-typescript-codegen`.

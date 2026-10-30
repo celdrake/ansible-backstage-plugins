@@ -26,9 +26,9 @@ portal:
   navigation:
     topOffset: 64
     items:
-      - id: hello-world
-        path: /hello-world
-        title: Hello World
+      - id: edge-fleets-poc
+        path: /edge-fleets-poc
+        title: Edge Fleets
       - id: templates
         path: /self-service
         title: Templates
@@ -245,7 +245,6 @@ catalog:
 
 ansible:
   hello-world:
-    enabled: true
     flightctl:
       apiBaseUrl: https://192.168.1.174.nip.io:3443
       organizationId: 8093ada4-3380-4098-8391-519d7e81d732

@@ -1,7 +1,7 @@
 {
   "name": "@ansible/portal-hello-world-common",
   "version": "0.1.0",
-  "description": "Shared Flightctl API model types for the Portal Hello World PoC.",
+  "description": "Shared Flightctl API model types for the Edge Fleets portal proof of concept.",
   "license": "MIT",
   "private": true,
   "main": "src/index.ts",

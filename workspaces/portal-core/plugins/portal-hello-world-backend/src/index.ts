@@ -4,8 +4,6 @@ import {
 } from '@backstage/backend-plugin-api';
 import { ansibleServiceRef } from '@ansible/backstage-rhaap-common';
 import express from 'express';
-import type { HttpAuthService } from '@backstage/backend-plugin-api';
-import { createAapApiExampleRouter } from './aapApiExampleRouter';
 import { createFlightctlFleetsRouter } from './flightctlFleetsRouter';
 
 export default createBackendPlugin({
@@ -15,29 +13,12 @@ export default createBackendPlugin({
       deps: {
         httpAuth: coreServices.httpAuth,
         httpRouter: coreServices.httpRouter,
-        userInfo: coreServices.userInfo,
         config: coreServices.rootConfig,
         ansibleService: ansibleServiceRef,
       },
-      async init({ httpAuth, httpRouter, userInfo, config, ansibleService }) {
+      async init({ httpAuth, httpRouter, config, ansibleService }) {
         const router = express.Router();
 
-        router.get('/whoami', async (req, res) => {
-          const credentials = await httpAuth.credentials(
-            req as unknown as Parameters<HttpAuthService['credentials']>[0],
-            { allow: ['user'] },
-          );
-          const identity = await userInfo.getUserInfo(credentials);
-          res.json({ authenticated: true, ...identity });
-        });
-
-        router.use(
-          createAapApiExampleRouter({
-            httpAuth,
-            ansibleService,
-            config,
-          }),
-        );
         router.use(
           createFlightctlFleetsRouter({
             httpAuth,

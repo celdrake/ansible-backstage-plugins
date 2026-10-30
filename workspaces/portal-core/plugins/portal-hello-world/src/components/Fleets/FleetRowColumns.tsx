@@ -1,84 +1,68 @@
 import {
+  DeviceOsSpec,
   DeviceSummaryStatusType,
   Fleet,
 } from '@ansible/portal-hello-world-common';
-import type { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
 import { StatusPending } from '@backstage/core-components';
+import { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
+
 import FleetStatus from './FleetStatus';
 
 export const FleetHealth = ({ fleet }: { fleet: Fleet }) => {
   return <FleetStatus fleetStatus={fleet.status} />;
 };
 
+// CELIA-WIP: MAKE IT IN A UTILS MODULE
+const getFleetCatalogItem = (fleet: Fleet, catalogItems: CatalogItem[]) => {
+  const osRef = fleet.spec.template.spec.os?.catalogItemRef;
+  if (!osRef) {
+    return undefined;
+  }
+  return catalogItems.find(
+    item =>
+      item.metadata.name === osRef.item &&
+      item.metadata.catalog === osRef.catalog,
+  );
+};
+
+// CELIA-WIP: This is a temporary type to avoid importing the hook. Make it reusable
+export type FleetCatalogItemsState =
+  | { status: 'loading' }
+  | { status: 'loaded'; catalogItems: CatalogItem[] }
+  | { status: 'error'; message: string };
+
+const FleetCatalogOs = ({
+  osSpec,
+  catalogItem,
+}: {
+  osSpec: DeviceOsSpec | undefined;
+  catalogItem: CatalogItem | undefined;
+}) => {
+  return <div>{catalogItem?.spec.displayName ?? 'OS not configured'}</div>;
+};
+
 export const FleetOs = ({
   fleet,
-  catalogItem,
-  catalogItemsLoading,
+  catalogItemState,
 }: {
   fleet: Fleet;
-  catalogItem?: CatalogItem;
-  catalogItemsLoading?: boolean;
+  catalogItemState: FleetCatalogItemsState;
 }) => {
-  const osSpec = fleet.spec.template.spec.os;
-  const catalogItemRef = osSpec?.catalogItemRef;
-  const image = osSpec?.image;
-  const availableVersions = catalogItem?.spec.versions
-    .map(({ version }) => version)
-    .join(', ');
+  // CELIA-WIP: Discuss the UX for the loading and error states.
 
-  if (!catalogItemRef && !image) {
-    return <div>No OS configured</div>;
+  if (catalogItemState.status === 'loading') {
+    return <StatusPending>Loading</StatusPending>;
+  }
+  if (catalogItemState.status === 'error') {
+    return 'OS Unavailable';
   }
 
-  return (
-    <div>
-      <div>
-        {catalogItemRef ? (
-          <strong>
-            {catalogItem?.spec.displayName ?? catalogItemRef.item}
-          </strong>
-        ) : (
-          image
-        )}
-      </div>
-      {catalogItemRef ? (
-        <>
-          <small>
-            {catalogItemRef.catalog}/{catalogItemRef.item}
-          </small>
-          <br />
-          <small>Fleet version: {catalogItemRef.version}</small>
-          {catalogItem?.spec.shortDescription && (
-            <>
-              <br />
-              <small>{catalogItem.spec.shortDescription}</small>
-            </>
-          )}
-          {catalogItem ? (
-            <>
-              <br />
-              <small>
-                Catalog versions: {availableVersions || 'None listed'}
-              </small>
-            </>
-          ) : catalogItemsLoading ? (
-            <StatusPending>Loading catalog item</StatusPending>
-          ) : (
-            <>
-              <br />
-              <small>Catalog item details unavailable</small>
-            </>
-          )}
-        </>
-      ) : null}
-      <div>
-        Update state: <StatusPending>WIP</StatusPending>
-      </div>
-      <small>Rollout progress: WIP</small>
-      <br />
-      <small>OS source: {catalogItemRef ? 'Catalog' : 'Image'}</small>
-    </div>
-  );
+  const osSpec = fleet.spec.template.spec.os;
+  if (!osSpec || !osSpec.catalogItemRef) {
+    return <div>{osSpec?.image ?? 'OS not configured'}</div>;
+  }
+  const catalogItem = getFleetCatalogItem(fleet, catalogItemState.catalogItems);
+  return <FleetCatalogOs osSpec={osSpec} catalogItem={catalogItem} />;
 };
 
 export const FleetDevicesCount = ({ fleet }: { fleet: Fleet }) => {
@@ -92,8 +76,4 @@ export const FleetDevicesCount = ({ fleet }: { fleet: Fleet }) => {
     summary.summaryStatus[DeviceSummaryStatusType.DeviceSummaryStatusOnline] ??
     0;
   return `${online}/${summary.total} online`;
-};
-
-export const FleetCatalog = (_props: { fleet: Fleet }) => {
-  return <div>FleetCatalog</div>;
 };

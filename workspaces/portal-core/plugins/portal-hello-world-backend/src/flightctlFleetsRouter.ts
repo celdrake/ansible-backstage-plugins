@@ -5,7 +5,7 @@ import type { IAAPService } from '@ansible/backstage-rhaap-common';
 import type { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
 import * as https from 'node:https';
 import express from 'express';
-import { readUserOrganizations } from './aapApiExampleRouter';
+import { readUserOrganizations } from './aapAuth';
 
 type FlightctlRequestOptions = {
   apiBaseUrl: string;
@@ -13,6 +13,20 @@ type FlightctlRequestOptions = {
   organizationId: string;
   skipTlsVerify: boolean;
 };
+
+type FlightctlRouterOptions = {
+  httpAuth: HttpAuthService;
+  ansibleService: IAAPService;
+  config: Config;
+};
+
+type FlightctlApiResult = { status: number; body: unknown };
+
+class FlightctlRouteError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+  }
+}
 
 // Temporary AAP-to-Flightctl organization mapping until the mapping API exists.
 const FLIGHTCTL_AAP_ORGANIZATION_ID = '1';
@@ -25,7 +39,7 @@ const FLEET_NAME_PATTERN =
 async function flightctlApiCall(
   url: URL,
   options: FlightctlRequestOptions,
-): Promise<{ status: number; body: unknown }> {
+): Promise<FlightctlApiResult> {
   if (url.protocol !== 'https:') {
     throw new Error('The Flightctl API URL must use HTTPS.');
   }
@@ -72,7 +86,7 @@ async function flightctlApiCall(
 // Retrieves the fleets.
 async function fetchFleets(
   options: FlightctlRequestOptions,
-): Promise<{ status: number; body: unknown }> {
+): Promise<FlightctlApiResult> {
   const url = new URL('/api/v1/fleets', options.apiBaseUrl);
   url.searchParams.set('org_id', options.organizationId);
   url.searchParams.set('addDevicesSummary', 'true');
@@ -84,7 +98,7 @@ async function fetchFleets(
 async function fetchCatalogItems(
   options: FlightctlRequestOptions,
   fleetNames: string[],
-): Promise<{ status: number; body: unknown }> {
+): Promise<FlightctlApiResult> {
   const url = new URL('/api/v1/catalogitems', options.apiBaseUrl);
   url.searchParams.set('org_id', options.organizationId);
   url.searchParams.set('fieldSelector', `fleet in (${fleetNames.join(',')})`);
@@ -129,64 +143,84 @@ function readFleetNames(req: express.Request): string[] | undefined {
   return uniqueValues;
 }
 
-export function createFlightctlFleetsRouter(options: {
-  httpAuth: HttpAuthService;
-  ansibleService: IAAPService;
-  config: Config;
-}): express.Router {
+async function resolveFlightctlRequestOptions(
+  req: express.Request,
+  options: FlightctlRouterOptions,
+): Promise<FlightctlRequestOptions> {
+  const apiBaseUrl = options.config.getOptionalString(
+    'ansible.hello-world.flightctl.apiBaseUrl',
+  );
+  const configuredOrganizationId = options.config
+    .getOptionalString('ansible.hello-world.flightctl.organizationId')
+    ?.trim();
+  if (!apiBaseUrl || !configuredOrganizationId) {
+    throw new FlightctlRouteError(
+      500,
+      'Configure ansible.hello-world.flightctl.apiBaseUrl and organizationId.',
+    );
+  }
+
+  const { accessToken, organizations } = await readUserOrganizations({
+    req,
+    httpAuth: options.httpAuth,
+    ansibleService: options.ansibleService,
+  });
+  const organization = organizations.find(
+    item => item.externalOrgId === FLIGHTCTL_AAP_ORGANIZATION_ID,
+  );
+  if (!organization) {
+    throw new FlightctlRouteError(
+      403,
+      'The AAP user does not have access to the configured Flightctl organization.',
+    );
+  }
+
+  return {
+    apiBaseUrl,
+    organizationId: configuredOrganizationId,
+    accessToken,
+    skipTlsVerify:
+      options.config.getOptionalBoolean(
+        'ansible.hello-world.flightctl.skipTlsVerify',
+      ) ?? false,
+  };
+}
+
+async function proxyFlightctlRequest(
+  req: express.Request,
+  res: express.Response,
+  routerOptions: FlightctlRouterOptions,
+  request: (options: FlightctlRequestOptions) => Promise<FlightctlApiResult>,
+): Promise<void> {
+  try {
+    const requestOptions = await resolveFlightctlRequestOptions(
+      req,
+      routerOptions,
+    );
+    const result = await request(requestOptions);
+    res.status(result.status).json(result.body);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Failed to call the Flightctl API.';
+    const status =
+      error instanceof FlightctlRouteError
+        ? error.status
+        : error instanceof AuthenticationError
+        ? 401
+        : 502;
+    res.status(status).json({ error: message });
+  }
+}
+
+export function createFlightctlFleetsRouter(
+  options: FlightctlRouterOptions,
+): express.Router {
   const router = express.Router();
 
   router.get('/fleets', async (req, res) => {
-    const apiBaseUrl = options.config.getOptionalString(
-      'ansible.hello-world.flightctl.apiBaseUrl',
-    );
-    const organizationId = options.config
-      .getOptionalString('ansible.hello-world.flightctl.organizationId')
-      ?.trim();
-    if (!apiBaseUrl || !organizationId) {
-      res.status(500).json({
-        error:
-          'Configure ansible.hello-world.flightctl.apiBaseUrl and organizationId.',
-      });
-      return;
-    }
-
-    try {
-      const { accessToken, organizations } = await readUserOrganizations({
-        ...options,
-        req,
-        organizationMappings: new Map([
-          [FLIGHTCTL_AAP_ORGANIZATION_ID, organizationId],
-        ]),
-      });
-      const organization = organizations.find(
-        item => item.externalOrgId === FLIGHTCTL_AAP_ORGANIZATION_ID,
-      );
-      if (!organization?.internalOrgId) {
-        res.status(403).json({
-          error:
-            'The AAP user does not have access to the configured Flightctl organization.',
-        });
-        return;
-      }
-      const result = await fetchFleets({
-        apiBaseUrl,
-        organizationId: organization.internalOrgId,
-        accessToken,
-        skipTlsVerify:
-          options.config.getOptionalBoolean(
-            'ansible.hello-world.flightctl.skipTlsVerify',
-          ) ?? false,
-      });
-      res.status(result.status).json(result.body);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Failed to call the Flightctl API.';
-      const status = error instanceof AuthenticationError ? 401 : 502;
-      res.status(status).json({ error: message });
-    }
+    await proxyFlightctlRequest(req, res, options, fetchFleets);
   });
 
   router.get('/catalogitems', async (req, res) => {
@@ -199,59 +233,9 @@ export function createFlightctlFleetsRouter(options: {
       return;
     }
 
-    const apiBaseUrl = options.config.getOptionalString(
-      'ansible.hello-world.flightctl.apiBaseUrl',
+    await proxyFlightctlRequest(req, res, options, requestOptions =>
+      fetchCatalogItems(requestOptions, fleetNames),
     );
-    const organizationId = options.config
-      .getOptionalString('ansible.hello-world.flightctl.organizationId')
-      ?.trim();
-    if (!apiBaseUrl || !organizationId) {
-      res.status(500).json({
-        error:
-          'Configure ansible.hello-world.flightctl.apiBaseUrl and organizationId.',
-      });
-      return;
-    }
-
-    try {
-      const { accessToken, organizations } = await readUserOrganizations({
-        ...options,
-        req,
-        organizationMappings: new Map([
-          [FLIGHTCTL_AAP_ORGANIZATION_ID, organizationId],
-        ]),
-      });
-      const organization = organizations.find(
-        item => item.externalOrgId === FLIGHTCTL_AAP_ORGANIZATION_ID,
-      );
-      if (!organization?.internalOrgId) {
-        res.status(403).json({
-          error:
-            'The AAP user does not have access to the configured Flightctl organization.',
-        });
-        return;
-      }
-      const result = await fetchCatalogItems(
-        {
-          apiBaseUrl,
-          organizationId: organization.internalOrgId,
-          accessToken,
-          skipTlsVerify:
-            options.config.getOptionalBoolean(
-              'ansible.hello-world.flightctl.skipTlsVerify',
-            ) ?? false,
-        },
-        fleetNames,
-      );
-      res.status(result.status).json(result.body);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Failed to call the Flightctl API.';
-      const status = error instanceof AuthenticationError ? 401 : 502;
-      res.status(status).json({ error: message });
-    }
   });
 
   return router;

@@ -25,10 +25,10 @@ as a separate Git Repository detail tab.
   It is not a Module Federation singleton registry provider.
 - **`portal-plugin-sdk`** — shared UI, notifications, caching, context hooks,
   polling integration, styles, icons and theme utilities.
-- **`portal-hello-world`** — runnable source-app example of a native NFS page
-  and a Portal SDK entity tab.
-- **`portal-hello-world-backend`** — authenticated `GET /api/hello-world/whoami`
-  example using Backstage `HttpAuthService` and `UserInfoService`.
+- **`portal-hello-world`** — Edge Fleets proof-of-concept page at
+  `/edge-fleets-poc`.
+- **`portal-hello-world-backend`** — authenticated Flightctl fleet and catalog
+  item routes using the signed-in AAP token.
 - **`portal-trust-signals`** — quickstart Git Repository detail tab using
   `usePortalContext` and the shared Portal SDK, with legacy and NFS declarations.
 - **`portal-trust-signals-backend`** — sample organization-scoped trust-signal

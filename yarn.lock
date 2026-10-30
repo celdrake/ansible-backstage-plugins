@@ -735,8 +735,6 @@ __metadata:
   resolution: "@ansible/portal-hello-world@workspace:workspaces/portal-core/plugins/portal-hello-world"
   dependencies:
     "@ansible/aap-app-auth": "workspace:^"
-    "@ansible/portal-extension-api": "workspace:^"
-    "@ansible/portal-extension-common": "workspace:^"
     "@ansible/portal-hello-world-common": "workspace:^"
     "@backstage/cli": "npm:^0.36.0"
     "@backstage/core-compat-api": "npm:0.5.11"

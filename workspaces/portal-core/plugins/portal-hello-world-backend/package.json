@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
-  "description": "Authenticated whoami endpoint for the Portal Hello World PoC.",
+  "description": "Authenticated Flightctl API routes for the Edge Fleets portal proof of concept.",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "configSchema": "config.d.ts",
