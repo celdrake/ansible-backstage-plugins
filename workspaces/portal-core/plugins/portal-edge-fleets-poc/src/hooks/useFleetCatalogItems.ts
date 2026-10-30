@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
+import type { CatalogItemList } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import type { FleetCatalogItemsState } from '../components/FleetsPage/types';
 import useFetchPeriodically from './useFetchPeriodically';
 import useFlightCtlApiFetch from './useFlightCtlApiFetch';

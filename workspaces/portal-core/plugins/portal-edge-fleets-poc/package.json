@@ -1,5 +1,5 @@
 {
-  "name": "@ansible/portal-hello-world",
+  "name": "@ansible/portal-edge-fleets-poc",
   "version": "0.1.0",
   "description": "Edge Fleets page for the Flightctl portal proof of concept.",
   "license": "Apache-2.0",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@ansible/aap-app-auth": "workspace:^",
-    "@ansible/portal-hello-world-common": "workspace:^",
+    "@ansible/portal-edge-fleets-poc-common": "workspace:^",
     "@backstage/core-compat-api": "0.5.11",
     "@backstage/core-components": "^0.18.8",
     "@backstage/frontend-plugin-api": "0.17.1",

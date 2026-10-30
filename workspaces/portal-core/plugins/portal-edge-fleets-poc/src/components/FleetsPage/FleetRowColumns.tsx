@@ -2,9 +2,9 @@ import {
   CatalogItemRefSpec,
   DeviceSummaryStatusType,
   Fleet,
-} from '@ansible/portal-hello-world-common';
+} from '@ansible/portal-edge-fleets-poc-common';
 import { StatusPending } from '@backstage/core-components';
-import { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
+import { CatalogItem } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import { Badge, Flex, Text } from '@backstage/ui';
 import {
   getCatalogItemUpdates,

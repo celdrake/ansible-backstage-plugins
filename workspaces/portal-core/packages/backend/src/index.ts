@@ -81,7 +81,7 @@ backend.add(import('@ansible/plugin-automation-content-backend'));
 
 // Portal health aggregation — exposes GET /api/portal-health/status
 backend.add(import('@ansible/portal-health-backend'));
-backend.add(import('@ansible/portal-hello-world-backend'));
+backend.add(import('@ansible/portal-edge-fleets-poc-backend'));
 backend.add(import('@ansible/portal-operations-backend'));
 backend.add(import('@ansible/portal-trust-signals-backend'));
 

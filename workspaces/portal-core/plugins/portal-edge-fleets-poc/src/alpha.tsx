@@ -6,7 +6,7 @@ import { compatWrapper } from '@backstage/core-compat-api';
 import RouterIcon from '@material-ui/icons/Router';
 
 export default createFrontendPlugin({
-  pluginId: 'hello-world',
+  pluginId: 'edge-fleets-poc',
   extensions: [
     PageBlueprint.make({
       name: 'edge-fleets-poc',

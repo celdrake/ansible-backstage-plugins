@@ -2,7 +2,7 @@ import type { HttpAuthService } from '@backstage/backend-plugin-api';
 import type { Config } from '@backstage/config';
 import { AuthenticationError } from '@backstage/errors';
 import type { IAAPService } from '@ansible/backstage-rhaap-common';
-import type { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
+import type { CatalogItemList } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import * as https from 'node:https';
 import express from 'express';
 import { readUserOrganizations } from './aapAuth';
@@ -148,15 +148,15 @@ async function resolveFlightctlRequestOptions(
   options: FlightctlRouterOptions,
 ): Promise<FlightctlRequestOptions> {
   const apiBaseUrl = options.config.getOptionalString(
-    'ansible.hello-world.flightctl.apiBaseUrl',
+    'ansible.edge-fleets-poc.flightctl.apiBaseUrl',
   );
   const configuredOrganizationId = options.config
-    .getOptionalString('ansible.hello-world.flightctl.organizationId')
+    .getOptionalString('ansible.edge-fleets-poc.flightctl.organizationId')
     ?.trim();
   if (!apiBaseUrl || !configuredOrganizationId) {
     throw new FlightctlRouteError(
       500,
-      'Configure ansible.hello-world.flightctl.apiBaseUrl and organizationId.',
+      'Configure ansible.edge-fleets-poc.flightctl.apiBaseUrl and organizationId.',
     );
   }
 
@@ -181,7 +181,7 @@ async function resolveFlightctlRequestOptions(
     accessToken,
     skipTlsVerify:
       options.config.getOptionalBoolean(
-        'ansible.hello-world.flightctl.skipTlsVerify',
+        'ansible.edge-fleets-poc.flightctl.skipTlsVerify',
       ) ?? false,
   };
 }

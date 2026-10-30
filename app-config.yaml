@@ -244,7 +244,7 @@ catalog:
     #         password: ${CONTENT_REGISTRY_PASSWORD}
 
 ansible:
-  hello-world:
+  edge-fleets-poc:
     flightctl:
       apiBaseUrl: https://192.168.1.174.nip.io:3443
       organizationId: 8093ada4-3380-4098-8391-519d7e81d732

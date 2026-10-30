@@ -1,5 +1,5 @@
 {
-  "name": "@ansible/portal-hello-world-backend",
+  "name": "@ansible/portal-edge-fleets-poc-backend",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -9,7 +9,7 @@
   "configSchema": "config.d.ts",
   "backstage": {
     "role": "backend-plugin",
-    "pluginId": "hello-world"
+    "pluginId": "edge-fleets-poc"
   },
   "scripts": {
     "build": "backstage-cli package build",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@ansible/backstage-rhaap-common": "workspace:^",
-    "@ansible/portal-hello-world-common": "workspace:^",
+    "@ansible/portal-edge-fleets-poc-common": "workspace:^",
     "@backstage/backend-plugin-api": "^1.8.0",
     "@backstage/config": "^1.3.6",
     "@backstage/errors": "^1.2.7",

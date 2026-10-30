@@ -3,7 +3,7 @@
 This workspace package implements the Git Repository tab example from
 `docs/next/portal-sdk-quickstart.md`. It registers the documented legacy tab and
 declares the equivalent NFS tab for the source app's default shell. It is
-separate from the `portal-hello-world` plugin.
+separate from the `portal-edge-fleets-poc` plugin.
 
 The frontend registers a Trust Signals tab with the legacy contribution
 registry, reads trusted memberships through `usePortalContext`, and calls

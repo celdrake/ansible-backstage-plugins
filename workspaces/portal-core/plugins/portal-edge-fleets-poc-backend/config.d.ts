@@ -1,6 +1,6 @@
 export interface Config {
   ansible?: {
-    'hello-world'?: {
+    'edge-fleets-poc'?: {
       flightctl?: {
         /** Base URL of the Flightctl API, including its exposed port. */
         apiBaseUrl?: string;

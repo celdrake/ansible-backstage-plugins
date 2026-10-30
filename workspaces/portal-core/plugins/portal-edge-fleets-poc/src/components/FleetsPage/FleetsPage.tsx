@@ -10,7 +10,7 @@ import { Alert, Badge, Box, Flex, Link, Text } from '@backstage/ui';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { type Fleet } from '@ansible/portal-hello-world-common';
+import { type Fleet } from '@ansible/portal-edge-fleets-poc-common';
 import useFleetList, {
   type SuccessFleetListState,
 } from '../../hooks/useFleetList';

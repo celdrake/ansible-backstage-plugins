@@ -6,8 +6,8 @@ those fleets to display their operating system information.
 
 The page calls these backend API routes:
 
-- `GET /api/hello-world/fleets`
-- `GET /api/hello-world/catalogitems?fleet=<fleet-name>` (one to 100 fleet
+- `GET /api/edge-fleets-poc/fleets`
+- `GET /api/edge-fleets-poc/catalogitems?fleet=<fleet-name>` (one to 100 fleet
   names are accepted)
 
 Both routes require a signed-in Backstage user and an AAP access token. The
@@ -19,7 +19,7 @@ Configure the Flightctl endpoint and organization in `app-config.local.yaml`:
 
 ```yaml
 ansible:
-  hello-world:
+  edge-fleets-poc:
     flightctl:
       apiBaseUrl: https://flightctl.example.com
       organizationId: 8093ada4-3380-4098-8391-519d7e81d732

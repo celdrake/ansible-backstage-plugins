@@ -41,7 +41,7 @@ const useFlightCtlApiFetch = () => {
         throw new Error(`Sign in with the RH AAP provider to load data.`);
       }
 
-      const baseUrl = await discoveryApi.getBaseUrl('hello-world');
+      const baseUrl = await discoveryApi.getBaseUrl('edge-fleets-poc');
       const response = await fetchApi.fetch(`${baseUrl}${path}`, {
         headers: {
           Authorization: `Bearer ${backstageToken}`,

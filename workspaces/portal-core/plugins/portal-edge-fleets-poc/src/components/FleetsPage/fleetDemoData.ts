@@ -6,7 +6,7 @@ import {
   type Fleet,
   type FleetList,
   type DeviceOsSpec,
-} from '@ansible/portal-hello-world-common';
+} from '@ansible/portal-edge-fleets-poc-common';
 
 const createCondition = (
   type: ConditionType,

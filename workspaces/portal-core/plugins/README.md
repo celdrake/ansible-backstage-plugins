@@ -3,7 +3,7 @@
 These packages separate shared contracts, frontend contribution authoring, host
 rendering, reusable UI, and backend infrastructure. They support native NFS
 composition; they do not require a global contribution registry singleton.
-`portal-hello-world` and `portal-hello-world-backend` form a small runnable
+`portal-edge-fleets-poc` and `portal-edge-fleets-poc-backend` form a small runnable
 example of a native page, an entity-tab contribution, and authenticated
 frontend-to-backend identity flow.
 `portal-trust-signals` and its backend implement the legacy registry quickstart
@@ -25,9 +25,9 @@ as a separate Git Repository detail tab.
   It is not a Module Federation singleton registry provider.
 - **`portal-plugin-sdk`** — shared UI, notifications, caching, context hooks,
   polling integration, styles, icons and theme utilities.
-- **`portal-hello-world`** — Edge Fleets proof-of-concept page at
+- **`portal-edge-fleets-poc`** — Edge Fleets proof-of-concept page at
   `/edge-fleets-poc`.
-- **`portal-hello-world-backend`** — authenticated Flightctl fleet and catalog
+- **`portal-edge-fleets-poc-backend`** — authenticated Flightctl fleet and catalog
   item routes using the signed-in AAP token.
 - **`portal-trust-signals`** — quickstart Git Repository detail tab using
   `usePortalContext` and the shared Portal SDK, with legacy and NFS declarations.

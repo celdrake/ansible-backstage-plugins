@@ -26,7 +26,7 @@ export const optionalContributorLoader = createFrontendFeatureLoader({
     const profile = resolveDevelopmentProfile(config);
     return [
       ...(profile !== 'core'
-        ? [import('@ansible/portal-hello-world/alpha')]
+        ? [import('@ansible/portal-edge-fleets-poc/alpha')]
         : []),
       ...(profile !== 'core'
         ? [import('@ansible/portal-trust-signals/alpha')]

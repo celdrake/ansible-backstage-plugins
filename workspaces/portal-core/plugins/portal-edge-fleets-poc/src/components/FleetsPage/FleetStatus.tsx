@@ -3,7 +3,7 @@ import {
   ConditionStatus,
   ConditionType,
   FleetStatus as ApiFleetStatus,
-} from '@ansible/portal-hello-world-common';
+} from '@ansible/portal-edge-fleets-poc-common';
 import { Flex } from '@backstage/ui';
 import SvgIcon from '@mui/material/SvgIcon';
 import PendingIcon from '@mui/icons-material/Pending';

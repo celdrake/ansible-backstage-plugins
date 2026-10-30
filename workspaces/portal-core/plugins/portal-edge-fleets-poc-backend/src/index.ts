@@ -7,7 +7,7 @@ import express from 'express';
 import { createFlightctlFleetsRouter } from './flightctlFleetsRouter';
 
 export default createBackendPlugin({
-  pluginId: 'hello-world',
+  pluginId: 'edge-fleets-poc',
   register(reg) {
     reg.registerInit({
       deps: {

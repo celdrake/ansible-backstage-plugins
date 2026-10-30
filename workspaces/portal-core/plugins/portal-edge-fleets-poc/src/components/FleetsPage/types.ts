@@ -1,4 +1,4 @@
-import { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
+import { CatalogItemList } from '@ansible/portal-edge-fleets-poc-common/alpha';
 
 export type FleetCatalogItemsState =
   | { status: 'loading' }

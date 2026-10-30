@@ -1,10 +1,13 @@
 import semver from 'semver';
-import { CatalogItemRefSpec, Fleet } from '@ansible/portal-hello-world-common';
+import {
+  CatalogItemRefSpec,
+  Fleet,
+} from '@ansible/portal-edge-fleets-poc-common';
 import {
   CatalogItemArtifactType,
   CatalogItem,
   CatalogItemVersion,
-} from '@ansible/portal-hello-world-common/alpha';
+} from '@ansible/portal-edge-fleets-poc-common/alpha';
 
 export const getFleetCatalogItem = (
   fleet: Fleet,

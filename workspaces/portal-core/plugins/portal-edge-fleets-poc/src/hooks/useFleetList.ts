@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { Fleet, FleetList } from '@ansible/portal-hello-world-common';
+import type { Fleet, FleetList } from '@ansible/portal-edge-fleets-poc-common';
 import useFetchPeriodically from './useFetchPeriodically';
 import useFlightCtlApiFetch from './useFlightCtlApiFetch';
 

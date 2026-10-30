@@ -1,5 +1,5 @@
 {
-  "name": "@ansible/portal-hello-world-common",
+  "name": "@ansible/portal-edge-fleets-poc-common",
   "version": "0.1.0",
   "description": "Shared Flightctl API model types for the Edge Fleets portal proof of concept.",
   "license": "MIT",
