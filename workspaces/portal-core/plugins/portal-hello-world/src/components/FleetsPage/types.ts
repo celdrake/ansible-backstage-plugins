@@ -1,6 +1,6 @@
-import { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
+import { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
 
 export type FleetCatalogItemsState =
   | { status: 'loading' }
-  | { status: 'loaded'; catalogItems: CatalogItem[] }
+  | { status: 'loaded'; catalogItemsList: CatalogItemList }
   | { status: 'error'; message: string };

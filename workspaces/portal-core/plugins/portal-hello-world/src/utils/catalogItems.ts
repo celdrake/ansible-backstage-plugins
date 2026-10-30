@@ -1,9 +1,5 @@
 import semver from 'semver';
-import {
-  CatalogItemRefSpec,
-  DeviceOsSpec,
-  Fleet,
-} from '@ansible/portal-hello-world-common';
+import { CatalogItemRefSpec, Fleet } from '@ansible/portal-hello-world-common';
 import {
   CatalogItemArtifactType,
   CatalogItem,

@@ -15,7 +15,8 @@ import useFleetList, {
   type SuccessFleetListState,
 } from '../../hooks/useFleetList';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
-import { FleetHealth, FleetOs, FleetDevicesCount } from './FleetRowColumns';
+import { FleetOs, FleetDevicesCount } from './FleetRowColumns';
+import FleetStatus from './FleetStatus';
 
 import '@backstage/ui/css/styles.css';
 
@@ -84,7 +85,7 @@ const FleetsPageContent = ({
       },
       {
         title: 'Health',
-        render: fleet => <FleetHealth fleet={fleet} />,
+        render: fleet => <FleetStatus fleetStatus={fleet.status} />,
       },
       {
         title: 'Devices',

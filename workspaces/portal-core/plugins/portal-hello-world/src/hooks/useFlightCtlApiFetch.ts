@@ -23,28 +23,22 @@ async function readError(response: Response): Promise<string> {
   return body;
 }
 
-const useHelloWorldApi = () => {
+const useFlightCtlApiFetch = () => {
   const discoveryApi = useApi(discoveryApiRef);
   const fetchApi = useApi(fetchApiRef);
   const identityApi = useApi(identityApiRef);
   const aapAuthApi = useApi(rhAapAuthApiRef);
 
   return useCallback(
-    async <T>(
-      path: string,
-      signal: AbortSignal,
-      resourceName: string,
-    ): Promise<T> => {
+    async <T>(path: string, signal: AbortSignal): Promise<T> => {
       const { token: backstageToken } = await identityApi.getCredentials();
       if (!backstageToken) {
-        throw new Error(`Sign in to Backstage before loading ${resourceName}.`);
+        throw new Error(`Sign in to Backstage before loading data.`);
       }
 
       const aapAccessToken = await aapAuthApi.getAccessToken();
       if (!aapAccessToken) {
-        throw new Error(
-          `Sign in with the RH AAP provider to load ${resourceName}.`,
-        );
+        throw new Error(`Sign in with the RH AAP provider to load data.`);
       }
 
       const baseUrl = await discoveryApi.getBaseUrl('hello-world');
@@ -63,4 +57,4 @@ const useHelloWorldApi = () => {
   );
 };
 
-export default useHelloWorldApi;
+export default useFlightCtlApiFetch;

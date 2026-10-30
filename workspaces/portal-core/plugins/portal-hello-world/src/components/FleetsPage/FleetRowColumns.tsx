@@ -1,24 +1,17 @@
 import {
   CatalogItemRefSpec,
-  DeviceOsSpec,
   DeviceSummaryStatusType,
   Fleet,
 } from '@ansible/portal-hello-world-common';
 import { StatusPending } from '@backstage/core-components';
 import { CatalogItem } from '@ansible/portal-hello-world-common/alpha';
-import { Badge, Flex } from '@backstage/ui';
+import { Badge, Flex, Text } from '@backstage/ui';
 import {
   getCatalogItemUpdates,
   getFleetCatalogItem,
   getOsCatalogDisplayText,
 } from '../../utils/catalogItems';
 import { FleetCatalogItemsState } from './types';
-
-import FleetStatus from './FleetStatus';
-
-export const FleetHealth = ({ fleet }: { fleet: Fleet }) => {
-  return <FleetStatus fleetStatus={fleet.status} />;
-};
 
 const FleetCatalogOs = ({
   catalogItemRef,
@@ -62,12 +55,15 @@ export const FleetOs = ({
   const osSpec = fleet.spec.template.spec.os;
   if (!osSpec || !osSpec.catalogItemRef) {
     return (
-      <div style={{ border: '2px solid lime' }}>
+      <Text variant="body-small" color="secondary">
         {osSpec?.image ?? 'OS not configured'}
-      </div>
+      </Text>
     );
   }
-  const catalogItem = getFleetCatalogItem(fleet, catalogItemState.catalogItems);
+  const catalogItem = getFleetCatalogItem(
+    fleet,
+    catalogItemState.catalogItemsList.items,
+  );
   return (
     <FleetCatalogOs
       catalogItem={catalogItem}

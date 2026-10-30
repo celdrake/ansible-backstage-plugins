@@ -2,10 +2,10 @@ import { useCallback } from 'react';
 import type { CatalogItemList } from '@ansible/portal-hello-world-common/alpha';
 import type { FleetCatalogItemsState } from '../components/FleetsPage/types';
 import useFetchPeriodically from './useFetchPeriodically';
-import useHelloWorldApi from './useHelloWorldApi';
+import useFlightCtlApiFetch from './useFlightCtlApiFetch';
 
 const useFleetCatalogItems = (fleetNames: string[]): FleetCatalogItemsState => {
-  const fetchJson = useHelloWorldApi();
+  const flightctlFetch = useFlightCtlApiFetch();
   const fleetNamesKey = fleetNames.join('\u0000');
   const hasFleetNames = fleetNames.length > 0;
 
@@ -15,29 +15,20 @@ const useFleetCatalogItems = (fleetNames: string[]): FleetCatalogItemsState => {
       fleetNamesKey
         .split('\u0000')
         .forEach(name => query.append('fleet', name));
-      const catalogItemList = await fetchJson<CatalogItemList>(
+
+      return await flightctlFetch<CatalogItemList>(
         `/catalogitems?${query.toString()}`,
         signal,
-        'OS catalog items',
       );
-      if (!catalogItemList || !Array.isArray(catalogItemList.items)) {
-        throw new Error(
-          'The backend returned an invalid Flightctl catalog item list.',
-        );
-      }
-      return catalogItemList.items;
     },
-    [fetchJson, fleetNamesKey],
+    [flightctlFetch, fleetNamesKey],
   );
   const periodicState = useFetchPeriodically(fetchCatalogItems, {
     enabled: hasFleetNames,
   });
 
-  if (!hasFleetNames) {
-    return { status: 'loaded', catalogItems: [] };
-  }
   if (periodicState.data) {
-    return { status: 'loaded', catalogItems: periodicState.data };
+    return { status: 'loaded', catalogItemsList: periodicState.data };
   }
   if (periodicState.error) {
     return { status: 'error', message: periodicState.error.message };

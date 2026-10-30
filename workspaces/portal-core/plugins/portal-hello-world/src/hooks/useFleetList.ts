@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { Fleet, FleetList } from '@ansible/portal-hello-world-common';
 import useFetchPeriodically from './useFetchPeriodically';
-import useHelloWorldApi from './useHelloWorldApi';
+import useFlightCtlApiFetch from './useFlightCtlApiFetch';
 
 export type SuccessFleetListState = {
   status: 'loaded';
@@ -21,18 +21,11 @@ const getTotalOfflineDevices = (fleets: Fleet[]) => {
 };
 
 const useFleetList = (): FleetListState => {
-  const fetchJson = useHelloWorldApi();
+  const flightctlFetch = useFlightCtlApiFetch();
   const fetchFleets = useCallback(
-    async (signal: AbortSignal) => {
-      const fleetList = await fetchJson<FleetList>('/fleets', signal, 'fleets');
-      if (!fleetList || !Array.isArray(fleetList.items)) {
-        throw new Error(
-          'The backend returned an invalid Flightctl fleet list.',
-        );
-      }
-      return fleetList;
-    },
-    [fetchJson],
+    async (signal: AbortSignal) =>
+      await flightctlFetch<FleetList>('/fleets', signal),
+    [flightctlFetch],
   );
   const { data: fleetList, error } = useFetchPeriodically(fetchFleets);
 
@@ -43,7 +36,9 @@ const useFleetList = (): FleetListState => {
       totalOfflineDevices: getTotalOfflineDevices(fleetList.items),
     };
   }
-  if (error) return { status: 'error', message: error.message };
+  if (error) {
+    return { status: 'error', message: error.message };
+  }
   return { status: 'loading' };
 };
 
