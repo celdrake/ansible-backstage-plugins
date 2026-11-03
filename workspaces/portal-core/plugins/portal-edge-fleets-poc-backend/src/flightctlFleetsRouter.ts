@@ -160,27 +160,19 @@ function isValidString(
   return typeof value === 'string' && (acceptEmpty || value.length > 0);
 }
 
-function isFleetOsUpdatePatch(value: unknown): value is PatchRequest {
+function isFleetPatch(value: unknown): value is PatchRequest {
   if (!Array.isArray(value) || value.length !== 1) return false;
 
   const [operation] = value;
   if (
     !isRecord(operation) ||
     operation.op !== 'replace' ||
-    operation.path !== FLEET_OS_SPEC_PATH ||
-    !isRecord(operation.value) ||
-    !isRecord(operation.value.catalogItemRef)
+    !isValidString(operation.path)
   ) {
     return false;
   }
 
-  const catalogItemRef = operation.value.catalogItemRef;
-  return (
-    isValidString(catalogItemRef.catalog) &&
-    isValidString(catalogItemRef.item) &&
-    isValidString(catalogItemRef.version) &&
-    isValidString(catalogItemRef.channel, true)
-  );
+  return true;
 }
 
 function readFleetNames(req: express.Request): string[] | undefined {
@@ -299,7 +291,7 @@ export function createFlightctlFleetsRouter(
         res.status(400).json({ error: 'Provide a valid fleet name.' });
         return;
       }
-      if (!isFleetOsUpdatePatch(req.body)) {
+      if (!isFleetPatch(req.body)) {
         res.status(400).json({
           error:
             'Expected one replace operation for the fleet operating system catalog reference.',

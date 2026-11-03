@@ -28,7 +28,7 @@ import useFleetList, {
   type SuccessFleetListState,
 } from '../../hooks/useFleetList';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
-import useFlightCtlApiFetch from '../../hooks/useFlightCtlApiFetch';
+import useFleetUpdate from '../../hooks/useFleetUpdate';
 import {
   FleetOs,
   FleetDevicesCount,
@@ -50,11 +50,6 @@ const rhemUrl = 'https://edge-manager.redhat.com';
 
 // Avoid error in the console by providing a custom renderer for actions.
 const NoMaterialTableActions = () => null;
-
-type FleetUpdateRequest = {
-  fleet: Fleet;
-  targetVersion: CatalogItemVersion;
-};
 
 const NumberBox = ({ number, label }: { number: number; label: string }) => {
   return (
@@ -161,86 +156,17 @@ const FleetsPageContent = ({
 
 const FleetsPage = () => {
   const fleetListState = useFleetList();
-  const flightctlFetch = useFlightCtlApiFetch();
+  const {
+    updateRequest,
+    isUpdatingFleet,
+    updateError,
+    updateSubmitted,
+    openFleetUpdate,
+    closeFleetUpdate,
+    confirmFleetUpdate,
+    handleFleetUpdateDialogOpenChange,
+  } = useFleetUpdate(fleetListState.refetch);
   const [showRhemLink, setShowRhemLink] = React.useState(true);
-  const [fleetUpdate, setFleetUpdate] = React.useState<FleetUpdateRequest>();
-  const [isUpdatingFleet, setIsUpdatingFleet] = React.useState(false);
-  const [fleetUpdateError, setFleetUpdateError] = React.useState<string>();
-  const [fleetUpdateSubmitted, setFleetUpdateSubmitted] = React.useState(false);
-
-  const openFleetUpdate = React.useCallback(
-    (fleet: Fleet, targetVersion: CatalogItemVersion) => {
-      setFleetUpdate({ fleet, targetVersion });
-      setFleetUpdateError(undefined);
-      setFleetUpdateSubmitted(false);
-    },
-    [],
-  );
-
-  const closeFleetUpdate = React.useCallback(() => {
-    if (isUpdatingFleet) {
-      return;
-    }
-    setFleetUpdate(undefined);
-    setFleetUpdateError(undefined);
-    setFleetUpdateSubmitted(false);
-  }, [isUpdatingFleet]);
-
-  const confirmFleetUpdate = React.useCallback(async () => {
-    if (!fleetUpdate) return;
-
-    const fleetName = fleetUpdate.fleet.metadata.name;
-    const currentOs = fleetUpdate.fleet.spec.template.spec.os;
-    const catalogItemRef = currentOs?.catalogItemRef;
-    if (!fleetName || !catalogItemRef) {
-      setFleetUpdateError(
-        'The fleet operating system catalog reference is unavailable.',
-      );
-      return;
-    }
-
-    setIsUpdatingFleet(true);
-    setFleetUpdateError(undefined);
-    try {
-      await flightctlFetch<void>(
-        `/fleets/${encodeURIComponent(fleetName)}`,
-        undefined,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json-patch+json' },
-          body: JSON.stringify([
-            {
-              op: 'replace',
-              path: '/spec/template/spec/os',
-              value: {
-                catalogItemRef: {
-                  ...catalogItemRef,
-                  version: fleetUpdate.targetVersion.version,
-                },
-              },
-            },
-          ]),
-        },
-      );
-      fleetListState.refetch();
-      setFleetUpdateSubmitted(true);
-    } catch (error) {
-      setFleetUpdateError(
-        error instanceof Error ? error.message : 'Unable to update fleet.',
-      );
-    } finally {
-      setIsUpdatingFleet(false);
-    }
-  }, [fleetListState.refetch, fleetUpdate, flightctlFetch]);
-
-  const handleFleetUpdateDialogOpenChange = React.useCallback(
-    (isOpen: boolean) => {
-      if (!isOpen) {
-        closeFleetUpdate();
-      }
-    },
-    [closeFleetUpdate],
-  );
 
   let content;
   if (fleetListState.status === 'loading') {
@@ -268,10 +194,8 @@ const FleetsPage = () => {
     );
   }
 
-  const fleetName = fleetUpdate?.fleet.metadata.name ?? '';
-  const currentVersion =
-    fleetUpdate?.fleet.spec.template.spec.os?.catalogItemRef?.version ??
-    'unknown';
+  const fleetName = updateRequest?.fleetName ?? '';
+  const currentVersion = updateRequest?.currentVersion ?? 'unknown';
 
   return (
     <Page themeId="app">
@@ -312,7 +236,7 @@ const FleetsPage = () => {
       />
       {content}
       <Dialog
-        isOpen={Boolean(fleetUpdate)}
+        isOpen={Boolean(updateRequest)}
         isDismissable={!isUpdatingFleet}
         isKeyboardDismissDisabled={isUpdatingFleet}
         onOpenChange={handleFleetUpdateDialogOpenChange}
@@ -330,31 +254,31 @@ const FleetsPage = () => {
               <Text variant="body-medium">{currentVersion}</Text>
               <span aria-hidden="true">→</span>
               <Text variant="body-medium">
-                {fleetUpdate?.targetVersion.version}
+                {updateRequest?.targetVersion.version}
               </Text>
             </Flex>
           </Box>
-          {fleetUpdateError && (
+          {updateError && (
             <Alert
               status="danger"
               title="Unable to update fleet"
-              description={fleetUpdateError}
+              description={updateError}
               icon
               mt="3"
             />
           )}
-          {fleetUpdateSubmitted && (
+          {updateSubmitted && (
             <Alert
               status="success"
               title="Fleet update requested"
-              description={`Fleet ${fleetName} is configured to update to version ${fleetUpdate?.targetVersion.version}.`}
+              description={`Fleet ${fleetName} is configured to update to version ${updateRequest?.targetVersion.version}.`}
               icon
               mt="3"
             />
           )}
         </DialogBody>
         <DialogFooter>
-          {fleetUpdateSubmitted ? (
+          {updateSubmitted ? (
             <Button variant="primary" onClick={closeFleetUpdate}>
               Close
             </Button>
