@@ -7,6 +7,8 @@ those fleets to display their operating system information.
 The page calls these backend API routes:
 
 - `GET /api/edge-fleets-poc/fleets`
+- `PATCH /api/edge-fleets-poc/fleets/<fleet-name>` to update a fleet's OS
+  catalog reference
 - `GET /api/edge-fleets-poc/catalogitems?fleet=<fleet-name>` (one to 100 fleet
   names are accepted)
 

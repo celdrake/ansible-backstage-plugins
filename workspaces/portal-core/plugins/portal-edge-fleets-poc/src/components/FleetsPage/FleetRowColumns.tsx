@@ -4,10 +4,14 @@ import {
   Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
 import { StatusPending } from '@backstage/core-components';
-import { CatalogItem } from '@ansible/portal-edge-fleets-poc-common/alpha';
+import type {
+  CatalogItem,
+  CatalogItemVersion,
+} from '@ansible/portal-edge-fleets-poc-common/alpha';
 import { Badge, Button, Flex, Text } from '@backstage/ui';
 import {
   getFleetCatalogItem,
+  getNextCatalogItemUpdate,
   getOsCatalogDisplayText,
 } from '../../utils/catalogItems';
 import { FleetCatalogItemsState } from './types';
@@ -95,9 +99,11 @@ export const FleetMaintenanceWindow = ({ fleet }: { fleet: Fleet }) => {
 export const FleetActions = ({
   fleet,
   catalogItemState,
+  onUpdate,
 }: {
   fleet: Fleet;
   catalogItemState: FleetCatalogItemsState;
+  onUpdate: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
 }) => {
   const osSpec = fleet.spec.template.spec.os;
   if (!osSpec?.catalogItemRef || catalogItemState.status === 'error') {
@@ -107,12 +113,19 @@ export const FleetActions = ({
     return <StatusPending>Loading</StatusPending>;
   }
 
-  const { catalogItem, hasUpdates } = getFleetCatalogItem(
+  const { catalogItem } = getFleetCatalogItem(
     fleet,
     catalogItemState.catalogItemsList.items,
   );
-  if (catalogItem && hasUpdates) {
-    return <Button>Update</Button>;
+  const nextVersion = catalogItem
+    ? getNextCatalogItemUpdate(
+        catalogItem,
+        osSpec.catalogItemRef.channel,
+        osSpec.catalogItemRef.version,
+      )
+    : undefined;
+  if (catalogItem && nextVersion) {
+    return <Button onClick={() => onUpdate(fleet, nextVersion)}>Update</Button>;
   }
   return null;
 };

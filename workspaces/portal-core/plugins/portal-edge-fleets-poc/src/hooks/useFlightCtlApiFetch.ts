@@ -30,7 +30,11 @@ const useFlightCtlApiFetch = () => {
   const aapAuthApi = useApi(rhAapAuthApiRef);
 
   return useCallback(
-    async <T>(path: string, signal: AbortSignal): Promise<T> => {
+    async <T>(
+      path: string,
+      signal?: AbortSignal,
+      requestInit: Omit<RequestInit, 'signal'> = {},
+    ): Promise<T> => {
       const { token: backstageToken } = await identityApi.getCredentials();
       if (!backstageToken) {
         throw new Error(`Sign in to Backstage before loading data.`);
@@ -42,16 +46,18 @@ const useFlightCtlApiFetch = () => {
       }
 
       const baseUrl = await discoveryApi.getBaseUrl('edge-fleets-poc');
+      const headers = new Headers(requestInit.headers);
+      headers.set('Authorization', `Bearer ${backstageToken}`);
+      headers.set('X-RHAAP-Access-Token', aapAccessToken);
       const response = await fetchApi.fetch(`${baseUrl}${path}`, {
-        headers: {
-          Authorization: `Bearer ${backstageToken}`,
-          'X-RHAAP-Access-Token': aapAccessToken,
-        },
+        ...requestInit,
+        headers,
         signal,
       });
       if (!response.ok) throw new Error(await readError(response));
 
-      return (await response.json()) as T;
+      const responseBody = await response.text();
+      return (responseBody ? JSON.parse(responseBody) : undefined) as T;
     },
     [aapAuthApi, discoveryApi, fetchApi, identityApi],
   );

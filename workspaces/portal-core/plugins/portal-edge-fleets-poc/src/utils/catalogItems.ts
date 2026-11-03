@@ -27,7 +27,6 @@ export const getFleetCatalogItem = (
       item.metadata.catalog === osRef.catalog,
   );
 
-  // CELIA-WIP: CAN THERE BE MORE THAN ONE UPDATE? WHICH TO RETURN IN THAT CASE?
   const hasUpdates =
     !!catalogItem &&
     getCatalogItemUpdates(catalogItem, osRef.channel, osRef.version).length > 0;
@@ -90,6 +89,19 @@ export const getCatalogItemUpdates = (
     hasContainerImage(catalogItem, version),
   );
 };
+
+/**
+ * Returns the highest semver version that can directly update the current
+ * version on its channel, matching the locked update flow in Flightctl UI.
+ */
+export const getNextCatalogItemUpdate = (
+  catalogItem: CatalogItem,
+  currentChannel: string | undefined,
+  currentVersion: string | undefined,
+): CatalogItemVersion | undefined =>
+  getCatalogItemUpdates(catalogItem, currentChannel, currentVersion).sort(
+    (a, b) => semver.rcompare(a.version, b.version),
+  )[0];
 
 export const getOsCatalogDisplayText = (
   catalogItemRef: CatalogItemRefSpec,

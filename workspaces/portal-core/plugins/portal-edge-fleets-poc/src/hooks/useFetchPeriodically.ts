@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const DEFAULT_INTERVAL_MS = 10_000;
 
-export type PeriodicFetchState<T> = {
+type PeriodicFetchDataState<T> = {
   data: T | undefined;
   isLoading: boolean;
   error: Error | undefined;
   isUpdating: boolean;
+};
+
+export type PeriodicFetchState<T> = PeriodicFetchDataState<T> & {
+  refetch: () => void;
 };
 
 type UseFetchPeriodicallyOptions = {
@@ -24,12 +28,15 @@ const useFetchPeriodically = <T>(
     intervalMs = DEFAULT_INTERVAL_MS,
   }: UseFetchPeriodicallyOptions = {},
 ): PeriodicFetchState<T> => {
-  const [state, setState] = useState<PeriodicFetchState<T>>({
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const [state, setState] = useState<PeriodicFetchDataState<T>>({
     data: undefined,
     isLoading: enabled,
     error: undefined,
     isUpdating: false,
   });
+
+  const refetch = useCallback(() => setForceUpdate(value => value + 1), []);
 
   useEffect(() => {
     if (!enabled) {
@@ -86,9 +93,9 @@ const useFetchPeriodically = <T>(
       if (timeout) clearTimeout(timeout);
       abortController?.abort();
     };
-  }, [enabled, fetcher, intervalMs]);
+  }, [enabled, fetcher, forceUpdate, intervalMs, refetch]);
 
-  return state;
+  return { ...state, refetch };
 };
 
 export default useFetchPeriodically;

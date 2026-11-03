@@ -2,6 +2,7 @@ import type { HttpAuthService } from '@backstage/backend-plugin-api';
 import type { Config } from '@backstage/config';
 import { AuthenticationError } from '@backstage/errors';
 import type { IAAPService } from '@ansible/backstage-rhaap-common';
+import type { PatchRequest } from '@ansible/portal-edge-fleets-poc-common';
 import type { CatalogItemList } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import * as https from 'node:https';
 import express from 'express';
@@ -22,6 +23,12 @@ type FlightctlRouterOptions = {
 
 type FlightctlApiResult = { status: number; body: unknown };
 
+type FlightctlApiCallOptions = {
+  method?: 'GET' | 'PATCH';
+  body?: string;
+  contentType?: string;
+};
+
 class FlightctlRouteError extends Error {
   constructor(readonly status: number, message: string) {
     super(message);
@@ -35,23 +42,28 @@ const MAX_FLEET_NAMES_PER_SELECTOR = 100;
 const MAX_FLEET_NAME_LENGTH = 253;
 const FLEET_NAME_PATTERN =
   /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/;
+const FLEET_OS_SPEC_PATH = '/spec/template/spec/os';
 
 async function flightctlApiCall(
   url: URL,
   options: FlightctlRequestOptions,
+  requestOptions: FlightctlApiCallOptions = {},
 ): Promise<FlightctlApiResult> {
   if (url.protocol !== 'https:') {
     throw new Error('The Flightctl API URL must use HTTPS.');
   }
 
+  const { method = 'GET', body, contentType } = requestOptions;
+
   return new Promise((resolve, reject) => {
     const request = https.request(
       url,
       {
-        method: 'GET',
+        method,
         headers: {
           Accept: 'application/json',
           Authorization: `Bearer ${options.accessToken}`,
+          ...(contentType ? { 'Content-Type': contentType } : {}),
         },
         rejectUnauthorized: !options.skipTlsVerify,
       },
@@ -79,7 +91,7 @@ async function flightctlApiCall(
       request.destroy(new Error('Flightctl API request timed out.'));
     });
     request.on('error', reject);
-    request.end();
+    request.end(body);
   });
 }
 
@@ -117,6 +129,58 @@ async function fetchCatalogItems(
   }
 
   return result;
+}
+
+async function patchFleetOs(
+  options: FlightctlRequestOptions,
+  fleetName: string,
+  patches: PatchRequest,
+): Promise<FlightctlApiResult> {
+  const url = new URL(
+    `/api/v1/fleets/${encodeURIComponent(fleetName)}`,
+    options.apiBaseUrl,
+  );
+  url.searchParams.set('org_id', options.organizationId);
+
+  return flightctlApiCall(url, options, {
+    method: 'PATCH',
+    contentType: 'application/json-patch+json',
+    body: JSON.stringify(patches),
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isValidString(
+  value: unknown,
+  acceptEmpty: boolean = false,
+): value is string {
+  return typeof value === 'string' && (acceptEmpty || value.length > 0);
+}
+
+function isFleetOsUpdatePatch(value: unknown): value is PatchRequest {
+  if (!Array.isArray(value) || value.length !== 1) return false;
+
+  const [operation] = value;
+  if (
+    !isRecord(operation) ||
+    operation.op !== 'replace' ||
+    operation.path !== FLEET_OS_SPEC_PATH ||
+    !isRecord(operation.value) ||
+    !isRecord(operation.value.catalogItemRef)
+  ) {
+    return false;
+  }
+
+  const catalogItemRef = operation.value.catalogItemRef;
+  return (
+    isValidString(catalogItemRef.catalog) &&
+    isValidString(catalogItemRef.item) &&
+    isValidString(catalogItemRef.version) &&
+    isValidString(catalogItemRef.channel, true)
+  );
 }
 
 function readFleetNames(req: express.Request): string[] | undefined {
@@ -222,6 +286,32 @@ export function createFlightctlFleetsRouter(
   router.get('/fleets', async (req, res) => {
     await proxyFlightctlRequest(req, res, options, fetchFleets);
   });
+
+  router.patch(
+    '/fleets/:fleetName',
+    express.json({
+      limit: '64kb',
+      type: ['application/json', 'application/json-patch+json'],
+    }),
+    async (req, res) => {
+      const fleetName = req.params.fleetName;
+      if (!FLEET_NAME_PATTERN.test(fleetName)) {
+        res.status(400).json({ error: 'Provide a valid fleet name.' });
+        return;
+      }
+      if (!isFleetOsUpdatePatch(req.body)) {
+        res.status(400).json({
+          error:
+            'Expected one replace operation for the fleet operating system catalog reference.',
+        });
+        return;
+      }
+
+      await proxyFlightctlRequest(req, res, options, requestOptions =>
+        patchFleetOs(requestOptions, fleetName, req.body),
+      );
+    },
+  );
 
   router.get('/catalogitems', async (req, res) => {
     const fleetNames = readFleetNames(req);

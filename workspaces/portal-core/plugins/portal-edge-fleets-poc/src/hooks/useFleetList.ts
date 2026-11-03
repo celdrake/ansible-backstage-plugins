@@ -7,11 +7,12 @@ export type SuccessFleetListState = {
   status: 'loaded';
   fleets: Fleet[];
   totalOfflineDevices: number;
+  refetch: () => void;
 };
 
 export type FleetListState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
+  | { status: 'loading'; refetch: () => void }
+  | { status: 'error'; message: string; refetch: () => void }
   | SuccessFleetListState;
 
 const getTotalOfflineDevices = (fleets: Fleet[]) => {
@@ -27,19 +28,20 @@ const useFleetList = (): FleetListState => {
       await flightctlFetch<FleetList>('/fleets', signal),
     [flightctlFetch],
   );
-  const { data: fleetList, error } = useFetchPeriodically(fetchFleets);
+  const { data: fleetList, error, refetch } = useFetchPeriodically(fetchFleets);
 
   if (fleetList) {
     return {
       status: 'loaded',
       fleets: fleetList.items,
       totalOfflineDevices: getTotalOfflineDevices(fleetList.items),
+      refetch,
     };
   }
   if (error) {
-    return { status: 'error', message: error.message };
+    return { status: 'error', message: error.message, refetch };
   }
-  return { status: 'loading' };
+  return { status: 'loading', refetch };
 };
 
 export default useFleetList;
