@@ -15,13 +15,27 @@ export const getFleetCatalogItem = (
 ) => {
   const osRef = fleet.spec.template.spec.os?.catalogItemRef;
   if (!osRef) {
-    return undefined;
+    return {
+      catalogItem: undefined,
+      hasUpdates: false,
+    };
   }
-  return catalogItems.find(
+
+  const catalogItem = catalogItems.find(
     item =>
       item.metadata.name === osRef.item &&
       item.metadata.catalog === osRef.catalog,
   );
+
+  // CELIA-WIP: CAN THERE BE MORE THAN ONE UPDATE? WHICH TO RETURN IN THAT CASE?
+  const hasUpdates =
+    !!catalogItem &&
+    getCatalogItemUpdates(catalogItem, osRef.channel, osRef.version).length > 0;
+
+  return {
+    catalogItem,
+    hasUpdates,
+  };
 };
 
 const hasContainerImage = (
@@ -77,6 +91,14 @@ export const getCatalogItemUpdates = (
   );
 };
 
-export const getOsCatalogDisplayText = (catalogItemRef: CatalogItemRefSpec) => {
-  return `${catalogItemRef.item}:${catalogItemRef.version ?? 'unknown'}`;
+export const getOsCatalogDisplayText = (
+  catalogItemRef: CatalogItemRefSpec,
+  catalogItem: CatalogItem | undefined,
+) => {
+  if (!catalogItem) {
+    return `${catalogItemRef.item}:${catalogItemRef.version ?? 'unknown'}`;
+  }
+  return `${catalogItem.spec.displayName || catalogItem.metadata.name}:${
+    catalogItemRef.version
+  }`;
 };

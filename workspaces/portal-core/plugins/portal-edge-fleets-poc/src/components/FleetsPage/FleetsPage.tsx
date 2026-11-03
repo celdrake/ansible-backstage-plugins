@@ -15,7 +15,12 @@ import useFleetList, {
   type SuccessFleetListState,
 } from '../../hooks/useFleetList';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
-import { FleetOs, FleetDevicesCount } from './FleetRowColumns';
+import {
+  FleetOs,
+  FleetDevicesCount,
+  FleetMaintenanceWindow,
+  FleetActions,
+} from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
 
 import '@backstage/ui/css/styles.css';
@@ -24,8 +29,7 @@ import '@backstage/ui/css/styles.css';
 // CELIA-WIP: pagination
 // CELIA-WIP: which fleets are fetched? which order?
 
-// CELIA-WIP: Is banner dismissable forever?
-// What are the rules to dismiss it?
+// CELIA-WIP: Is banner dismissable forever? What are the rules to dismiss it?
 
 // CELIA-WIP: This should be a constant in the config.
 const rhemUrl = 'https://edge-manager.redhat.com';
@@ -99,11 +103,13 @@ const FleetsPageContent = ({
       },
       {
         title: 'Maintenance window',
-        render: _fleet => 'Sat 02:00 - 06:00 UTC',
+        render: fleet => <FleetMaintenanceWindow fleet={fleet} />,
       },
       {
         title: 'Actions',
-        render: _fleet => 'WIP',
+        render: fleet => (
+          <FleetActions fleet={fleet} catalogItemState={catalogItemsState} />
+        ),
       },
     ],
     [catalogItemsState],

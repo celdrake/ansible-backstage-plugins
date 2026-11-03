@@ -5,32 +5,28 @@ import {
 } from '@ansible/portal-edge-fleets-poc-common';
 import { StatusPending } from '@backstage/core-components';
 import { CatalogItem } from '@ansible/portal-edge-fleets-poc-common/alpha';
-import { Badge, Flex, Text } from '@backstage/ui';
+import { Badge, Button, Flex, Text } from '@backstage/ui';
 import {
-  getCatalogItemUpdates,
   getFleetCatalogItem,
   getOsCatalogDisplayText,
 } from '../../utils/catalogItems';
 import { FleetCatalogItemsState } from './types';
+import { formatMaintenanceWindow } from '../../utils/time';
 
 const FleetCatalogOs = ({
   catalogItemRef,
   catalogItem,
+  hasUpdates,
 }: {
   catalogItemRef: CatalogItemRefSpec;
   catalogItem: CatalogItem | undefined;
+  hasUpdates: boolean;
 }) => {
-  const hasUpdates =
-    !!catalogItem &&
-    getCatalogItemUpdates(
-      catalogItem,
-      catalogItemRef.channel,
-      catalogItemRef.version,
-    ).length > 0;
-
+  // CELIA-WIP: How to show very long catalog item names?
+  const osDisplayText = getOsCatalogDisplayText(catalogItemRef, catalogItem);
   return (
     <Flex align="center" gap="2">
-      <span>{getOsCatalogDisplayText(catalogItemRef)}</span>
+      <span>{osDisplayText}</span>
       {hasUpdates && <Badge size="small">Update available</Badge>}
     </Flex>
   );
@@ -43,24 +39,25 @@ export const FleetOs = ({
   fleet: Fleet;
   catalogItemState: FleetCatalogItemsState;
 }) => {
-  // CELIA-WIP: Discuss the UX for the loading and error states.
-
-  if (catalogItemState.status === 'loading') {
-    return <StatusPending>Loading</StatusPending>;
-  }
-  if (catalogItemState.status === 'error') {
-    return 'OS Unavailable';
-  }
-
   const osSpec = fleet.spec.template.spec.os;
-  if (!osSpec || !osSpec.catalogItemRef) {
+  if (!osSpec?.catalogItemRef) {
     return (
       <Text variant="body-small" color="secondary">
         {osSpec?.image ?? 'OS not configured'}
       </Text>
     );
   }
-  const catalogItem = getFleetCatalogItem(
+
+  // CELIA-WIP: Discuss the UX for the loading and error states.
+  if (catalogItemState.status === 'loading') {
+    return <StatusPending>Loading</StatusPending>;
+  }
+  // CELIA-WIP: show the error state
+  if (catalogItemState.status === 'error') {
+    return getOsCatalogDisplayText(osSpec.catalogItemRef, undefined);
+  }
+
+  const { catalogItem, hasUpdates } = getFleetCatalogItem(
     fleet,
     catalogItemState.catalogItemsList.items,
   );
@@ -68,6 +65,7 @@ export const FleetOs = ({
     <FleetCatalogOs
       catalogItem={catalogItem}
       catalogItemRef={osSpec.catalogItemRef}
+      hasUpdates={hasUpdates}
     />
   );
 };
@@ -83,4 +81,38 @@ export const FleetDevicesCount = ({ fleet }: { fleet: Fleet }) => {
     summary.summaryStatus[DeviceSummaryStatusType.DeviceSummaryStatusOnline] ??
     0;
   return `${online}/${summary.total} online`;
+};
+
+export const FleetMaintenanceWindow = ({ fleet }: { fleet: Fleet }) => {
+  const updatePolicy = fleet.spec.template.spec.updatePolicy;
+  const updateSchedule = updatePolicy?.updateSchedule;
+  if (!updateSchedule) {
+    return 'Updates are immediate';
+  }
+  return formatMaintenanceWindow(updateSchedule);
+};
+
+export const FleetActions = ({
+  fleet,
+  catalogItemState,
+}: {
+  fleet: Fleet;
+  catalogItemState: FleetCatalogItemsState;
+}) => {
+  const osSpec = fleet.spec.template.spec.os;
+  if (!osSpec?.catalogItemRef || catalogItemState.status === 'error') {
+    return null;
+  }
+  if (catalogItemState.status === 'loading') {
+    return <StatusPending>Loading</StatusPending>;
+  }
+
+  const { catalogItem, hasUpdates } = getFleetCatalogItem(
+    fleet,
+    catalogItemState.catalogItemsList.items,
+  );
+  if (catalogItem && hasUpdates) {
+    return <Button>Update</Button>;
+  }
+  return null;
 };
