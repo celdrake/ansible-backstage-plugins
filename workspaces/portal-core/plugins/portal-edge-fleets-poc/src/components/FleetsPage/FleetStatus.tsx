@@ -5,7 +5,8 @@ import {
 } from '@ansible/portal-edge-fleets-poc-common';
 import { Flex, Text } from '@backstage/ui';
 
-import { statusColorStyles, type StatusLevel } from '../../styles';
+import { type StatusLevel } from '../../styles';
+import styles from './FleetStatus.module.css';
 
 export type FleetStatusType =
   | ConditionType.FleetValid
@@ -16,6 +17,13 @@ type FleetStatusItem = {
   id: FleetStatusType;
   level: StatusLevel;
   label: string;
+};
+
+const MarkerStyles: Record<StatusLevel, string> = {
+  success: styles.fleetStatusMarkerSuccess,
+  danger: styles.fleetStatusMarkerDanger,
+  warning: styles.fleetStatusMarkerWarning,
+  info: styles.fleetStatusMarkerInfo,
 };
 
 const getFleetStatusItem = (fleetStatus?: ApiFleetStatus): FleetStatusItem => {
@@ -38,24 +46,25 @@ const getFleetStatusItem = (fleetStatus?: ApiFleetStatus): FleetStatusItem => {
     return {
       id: 'Invalid',
       level: 'danger',
-      label: 'Fleet is invalid',
+      label: 'Invalid',
     };
   }
   return {
     id: ConditionType.FleetValid,
     level: 'success',
-    label: 'Fleet is valid',
+    label: 'Valid',
   };
 };
 
 const FleetStatus = ({ fleetStatus }: { fleetStatus?: ApiFleetStatus }) => {
   const fleetStatusItem = getFleetStatusItem(fleetStatus);
 
-  //       <span className={`${styles.statusDot} ${DOT[status.tone]}`} aria-hidden />
-
   const statusLevel = fleetStatusItem.level;
   return (
-    <Flex style={statusColorStyles[statusLevel]} gap="2">
+    <Flex className={styles.statusCell} gap="2">
+      <span
+        className={`${styles.fleetStatusMarker} ${MarkerStyles[statusLevel]}`}
+      />
       <Text variant="body-medium" weight="bold" color={statusLevel}>
         {fleetStatusItem.label}
       </Text>

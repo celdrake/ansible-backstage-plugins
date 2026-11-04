@@ -20,9 +20,6 @@ export const statusBgStyles: Record<StatusLevel, CSSProperties> = {
   success: {
     backgroundColor: 'var(--bui-bg-success)',
   },
-  unknown: {
-    backgroundColor: 'var(--bui-bg-neutral-1)',
-  },
 };
 
 export const statusColorStyles: Record<StatusLevel, CSSProperties> = {
@@ -37,8 +34,5 @@ export const statusColorStyles: Record<StatusLevel, CSSProperties> = {
   },
   success: {
     color: 'var(--bui-fg-success-on-bg)',
-  },
-  unknown: {
-    color: 'var(--bui-fg-primary)',
   },
 };

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { CatalogItemList } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import type { FleetCatalogItemsState } from '../components/FleetsPage/types';
 import useFetchPeriodically from './useFetchPeriodically';
@@ -26,14 +26,20 @@ const useFleetCatalogItems = (fleetNames: string[]): FleetCatalogItemsState => {
   const periodicState = useFetchPeriodically(fetchCatalogItems, {
     enabled: hasFleetNames,
   });
+  const errorMessage = periodicState.data
+    ? undefined
+    : periodicState.error?.message;
+  const hasError = !periodicState.data && periodicState.error !== undefined;
 
-  if (periodicState.data) {
-    return { status: 'loaded', catalogItemsList: periodicState.data };
-  }
-  if (periodicState.error) {
-    return { status: 'error', message: periodicState.error.message };
-  }
-  return { status: 'loading' };
+  return useMemo(() => {
+    if (periodicState.data) {
+      return { status: 'loaded', catalogItemsList: periodicState.data };
+    }
+    if (hasError) {
+      return { status: 'error', message: errorMessage ?? '' };
+    }
+    return { status: 'loading' };
+  }, [periodicState.data, errorMessage, hasError]);
 };
 
 export default useFleetCatalogItems;
