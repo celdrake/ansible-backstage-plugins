@@ -9,7 +9,7 @@ type FleetUpdateRequest = {
   targetVersion: CatalogItemVersion;
 };
 
-const useFleetUpdate = (refetchFleets: () => void) => {
+const useFleetUpdate = (refetchFleets: VoidFunction) => {
   const flightctlFetch = useFlightCtlApiFetch();
   const [updateRequest, setUpdateRequest] = useState<FleetUpdateRequest>();
   const [updateError, setUpdateError] = useState<string>();
@@ -80,7 +80,7 @@ const useFleetUpdate = (refetchFleets: () => void) => {
     }
   }, [updateRequest, flightctlFetch, refetchFleets]);
 
-  const handleFleetUpdateDialogOpenChange = useCallback(
+  const handleFleetUpdateDialogOpen = useCallback(
     (isOpen: boolean) => {
       if (!isOpen) {
         closeFleetUpdate();
@@ -97,7 +97,7 @@ const useFleetUpdate = (refetchFleets: () => void) => {
     openFleetUpdate,
     closeFleetUpdate,
     confirmFleetUpdate,
-    handleFleetUpdateDialogOpenChange,
+    handleFleetUpdateDialogOpen,
   };
 };
 

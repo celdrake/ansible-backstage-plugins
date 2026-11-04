@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-export type StatusLevel = 'danger' | 'info' | 'warning' | 'success' | 'unknown';
+export type StatusLevel = 'danger' | 'warning' | 'success' | 'info';
 
 /**
  * Semantic foreground and background colors for status indicators.

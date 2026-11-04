@@ -104,22 +104,18 @@ const FleetsPageContent = ({
         render: fleet => <strong>{fleet.metadata.name as string}</strong>,
       },
       {
-        title: 'Health',
+        title: 'Status',
         render: fleet => <FleetStatus fleetStatus={fleet.status} />,
       },
       {
-        title: 'Devices',
-        render: fleet => <FleetDevicesCount fleet={fleet} />,
-      },
-      {
-        title: 'Operating System',
+        title: 'OS target',
         render: fleet => (
           <FleetOs fleet={fleet} catalogItemState={catalogItemsState} />
         ),
       },
       {
-        title: 'Maintenance window',
-        render: fleet => <FleetMaintenanceWindow fleet={fleet} />,
+        title: 'Devices',
+        render: fleet => <FleetDevicesCount fleet={fleet} />,
       },
       {
         title: 'Actions',
@@ -164,7 +160,7 @@ const FleetsPage = () => {
     openFleetUpdate,
     closeFleetUpdate,
     confirmFleetUpdate,
-    handleFleetUpdateDialogOpenChange,
+    handleFleetUpdateDialogOpen,
   } = useFleetUpdate(fleetListState.refetch);
   const [showRhemLink, setShowRhemLink] = React.useState(true);
 
@@ -239,7 +235,7 @@ const FleetsPage = () => {
         isOpen={Boolean(updateRequest)}
         isDismissable={!isUpdatingFleet}
         isKeyboardDismissDisabled={isUpdatingFleet}
-        onOpenChange={handleFleetUpdateDialogOpenChange}
+        onOpenChange={handleFleetUpdateDialogOpen}
       >
         <DialogHeader>Confirm fleet update</DialogHeader>
         <DialogBody>
