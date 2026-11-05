@@ -3,9 +3,12 @@ import type { Fleet, FleetList } from '@ansible/portal-edge-fleets-poc-common';
 import useFetchPeriodically from './useFetchPeriodically';
 import useFlightCtlApiFetch from './useFlightCtlApiFetch';
 
+// Adjust the type so it has an "id" and can be used on the table
+export type EdgeFleet = Fleet & { id: string };
+
 export type SuccessFleetListState = {
   status: 'loaded';
-  fleets: Fleet[];
+  fleets: EdgeFleet[];
   refetch: () => void;
 };
 
@@ -26,7 +29,10 @@ const useFleetList = (): FleetListState => {
   if (fleetList) {
     return {
       status: 'loaded',
-      fleets: fleetList.items,
+      fleets: fleetList.items.map(fleet => ({
+        ...fleet,
+        id: fleet.metadata.name as string,
+      })),
       refetch,
     };
   }

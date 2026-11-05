@@ -4,15 +4,11 @@ import {
   Alert,
   Badge,
   Box,
-  Button,
   Cell,
   ColumnConfig,
-  Dialog,
-  DialogBody,
-  DialogFooter,
-  DialogHeader,
   Flex,
   Link,
+  SearchField,
   Table,
   Text,
   useTable,
@@ -26,6 +22,7 @@ import {
   type Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
 import useFleetList, {
+  type EdgeFleet,
   type SuccessFleetListState,
 } from '../../hooks/useFleetList';
 import useDevicesSummary from '../../hooks/useDevicesSummary';
@@ -34,6 +31,8 @@ import useFleetUpdate from '../../hooks/useFleetUpdate';
 import { FleetOs, FleetActions } from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
 import FleetsUpdatedDevicesBar from './FleetsUpdatedDevicesBar';
+import FleetOsUpdateDialog from './FleetOsUpdateDialog';
+
 import styles from './FleetsPage.module.css';
 // CELIA-WIP: translations??
 // CELIA-WIP: pagination
@@ -43,8 +42,6 @@ import styles from './FleetsPage.module.css';
 
 // CELIA-WIP: This should be a constant in the config.
 const rhemUrl = 'https://edge-manager.redhat.com';
-
-type FleetTableRow = Fleet & { id: string };
 
 const CountBox = ({
   count,
@@ -89,6 +86,21 @@ const FleetsPageSummary = ({
   );
 };
 
+const FleetsTableEmptyState = ({ hasSearch }: { hasSearch: boolean }) => {
+  return (
+    <div className={styles.fleetListTableEmptyState}>
+      <Text weight="bold">
+        {hasSearch ? 'No fleets match your search' : 'No edge fleets'}
+      </Text>
+      <Text color="secondary">
+        {hasSearch
+          ? 'Try a different search.'
+          : 'When fleets are available, they will appear in this list.'}
+      </Text>
+    </div>
+  );
+};
+
 const FleetsPageContent = ({
   fleetListState,
   onUpdateFleet,
@@ -97,39 +109,18 @@ const FleetsPageContent = ({
   onUpdateFleet: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
 }) => {
   const { fleets } = fleetListState;
-  const { data: devicesSummary } = useDevicesSummary();
   const fleetNames = fleets.map(fleet => fleet.metadata.name as string);
+  const { data: devicesSummary } = useDevicesSummary();
   const catalogItemsState = useFleetCatalogItems(fleetNames);
 
-  const tableData = React.useMemo<FleetTableRow[]>(
-    () =>
-      fleets.map(fleet => ({
-        ...fleet,
-        id: fleet.metadata.name as string,
-      })),
-    [fleets],
-  );
-  const { tableProps } = useTable<FleetTableRow>({
+  const { tableProps, search } = useTable<EdgeFleet>({
     mode: 'complete',
-    data: tableData,
+    data: fleets,
     paginationOptions: { type: 'none' },
   });
 
-  const search = { value: '' };
-  const statusFilter = 'all';
-  const osFilter = 'all';
-
-  const emptyTitle =
-    search.value || statusFilter !== 'all' || osFilter !== 'all'
-      ? 'No fleets match your filters'
-      : 'No edge fleets';
-  const emptyBody =
-    search.value || statusFilter !== 'all' || osFilter !== 'all'
-      ? 'Try a different search or clear the status and OS filters.'
-      : 'When fleets are available, they will appear in this list.';
-
   // CELIA-WIP: talk to Paola about how to render the different loading states.
-  const columns = React.useMemo<ColumnConfig<FleetTableRow>[]>(
+  const columns = React.useMemo<ColumnConfig<EdgeFleet>[]>(
     () => [
       {
         id: 'fleetName',
@@ -193,15 +184,15 @@ const FleetsPageContent = ({
           }
           totalDevicesCount={devicesSummary?.total}
         />
-        <Table<FleetTableRow>
+        <SearchField
+          aria-label="Search fleets by name"
+          placeholder="Search fleets..."
+          {...search}
+        />
+        <Table<EdgeFleet>
           columnConfig={columns}
+          emptyState={<FleetsTableEmptyState hasSearch={!!search.value} />}
           {...tableProps}
-          emptyState={
-            <div className={styles.fleetListTableEmptyState}>
-              <Text weight="bold">{emptyTitle}</Text>
-              <Text color="secondary">{emptyBody}</Text>
-            </div>
-          }
         />
       </Box>
     </Content>
@@ -210,16 +201,7 @@ const FleetsPageContent = ({
 
 const FleetsPage = () => {
   const fleetListState = useFleetList();
-  const {
-    updateRequest,
-    isUpdatingFleet,
-    updateError,
-    updateSubmitted,
-    openFleetUpdate,
-    closeFleetUpdate,
-    confirmFleetUpdate,
-    handleFleetUpdateDialogOpen,
-  } = useFleetUpdate(fleetListState.refetch);
+  const fleetUpdateState = useFleetUpdate(fleetListState.refetch);
   const [showRhemLink, setShowRhemLink] = React.useState(true);
 
   let content;
@@ -243,13 +225,10 @@ const FleetsPage = () => {
     content = (
       <FleetsPageContent
         fleetListState={fleetListState}
-        onUpdateFleet={openFleetUpdate}
+        onUpdateFleet={fleetUpdateState.openFleetUpdate}
       />
     );
   }
-
-  const fleetName = updateRequest?.fleetName ?? '';
-  const currentVersion = updateRequest?.currentVersion ?? 'unknown';
 
   return (
     <Page themeId="app">
@@ -289,73 +268,8 @@ const FleetsPage = () => {
         }
       />
       {content}
-      <Dialog
-        isOpen={Boolean(updateRequest)}
-        isDismissable={!isUpdatingFleet}
-        isKeyboardDismissDisabled={isUpdatingFleet}
-        onOpenChange={handleFleetUpdateDialogOpen}
-      >
-        <DialogHeader>Confirm fleet update</DialogHeader>
-        <DialogBody>
-          <Text variant="body-medium">
-            Update the operating system for fleet <strong>{fleetName}</strong>?
-          </Text>
-          <Box mt="3">
-            <Text variant="body-small" color="secondary">
-              Upgrade path
-            </Text>
-            <Flex align="center" gap="2">
-              <Text variant="body-medium">{currentVersion}</Text>
-              <span aria-hidden="true">→</span>
-              <Text variant="body-medium">
-                {updateRequest?.targetVersion.version}
-              </Text>
-            </Flex>
-          </Box>
-          {updateError && (
-            <Alert
-              status="danger"
-              title="Unable to update fleet"
-              description={updateError}
-              icon
-              mt="3"
-            />
-          )}
-          {updateSubmitted && (
-            <Alert
-              status="success"
-              title="Fleet update requested"
-              description={`Fleet ${fleetName} is configured to update to version ${updateRequest?.targetVersion.version}.`}
-              icon
-              mt="3"
-            />
-          )}
-        </DialogBody>
-        <DialogFooter>
-          {updateSubmitted ? (
-            <Button variant="primary" onClick={closeFleetUpdate}>
-              Close
-            </Button>
-          ) : (
-            <>
-              <Button
-                variant="secondary"
-                onClick={closeFleetUpdate}
-                isDisabled={isUpdatingFleet}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={confirmFleetUpdate}
-                isPending={isUpdatingFleet}
-              >
-                Confirm update
-              </Button>
-            </>
-          )}
-        </DialogFooter>
-      </Dialog>
+
+      <FleetOsUpdateDialog fleetUpdateState={fleetUpdateState} />
     </Page>
   );
 };

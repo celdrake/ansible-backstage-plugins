@@ -9,7 +9,18 @@ type FleetUpdateRequest = {
   targetVersion: CatalogItemVersion;
 };
 
-const useFleetUpdate = (refetchFleets: VoidFunction) => {
+export type UseFleetUpdateState = {
+  updateRequest: FleetUpdateRequest | undefined;
+  isUpdatingFleet: boolean;
+  updateError: string | undefined;
+  updateSubmitted: boolean;
+  openFleetUpdate: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
+  closeFleetUpdate: VoidFunction;
+  confirmFleetUpdate: VoidFunction;
+  handleFleetUpdateDialogOpen: (isOpen: boolean) => void;
+};
+
+const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
   const flightctlFetch = useFlightCtlApiFetch();
   const [updateRequest, setUpdateRequest] = useState<FleetUpdateRequest>();
   const [updateError, setUpdateError] = useState<string>();
