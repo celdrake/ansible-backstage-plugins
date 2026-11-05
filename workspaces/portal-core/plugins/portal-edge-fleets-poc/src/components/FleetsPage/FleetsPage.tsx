@@ -1,23 +1,21 @@
 import * as React from 'react';
-import {
-  Content,
-  Header,
-  Page,
-  Table,
-  type TableColumn,
-} from '@backstage/core-components';
+import { Content, Header, Page } from '@backstage/core-components';
 import {
   Alert,
   Badge,
   Box,
   Button,
+  Cell,
+  ColumnConfig,
   Dialog,
   DialogBody,
   DialogFooter,
   DialogHeader,
   Flex,
   Link,
+  Table,
   Text,
+  useTable,
 } from '@backstage/ui';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import CloseIcon from '@mui/icons-material/Close';
@@ -36,7 +34,7 @@ import useFleetUpdate from '../../hooks/useFleetUpdate';
 import { FleetOs, FleetActions } from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
 import FleetsUpdatedDevicesBar from './FleetsUpdatedDevicesBar';
-
+import styles from './FleetsPage.module.css';
 // CELIA-WIP: translations??
 // CELIA-WIP: pagination
 // CELIA-WIP: which fleets are fetched? which order?
@@ -46,8 +44,7 @@ import FleetsUpdatedDevicesBar from './FleetsUpdatedDevicesBar';
 // CELIA-WIP: This should be a constant in the config.
 const rhemUrl = 'https://edge-manager.redhat.com';
 
-// Avoid error in the console by providing a custom renderer for actions.
-const NoMaterialTableActions = () => null;
+type FleetTableRow = Fleet & { id: string };
 
 const CountBox = ({
   count,
@@ -104,37 +101,80 @@ const FleetsPageContent = ({
   const fleetNames = fleets.map(fleet => fleet.metadata.name as string);
   const catalogItemsState = useFleetCatalogItems(fleetNames);
 
+  const tableData = React.useMemo<FleetTableRow[]>(
+    () =>
+      fleets.map(fleet => ({
+        ...fleet,
+        id: fleet.metadata.name as string,
+      })),
+    [fleets],
+  );
+  const { tableProps } = useTable<FleetTableRow>({
+    mode: 'complete',
+    data: tableData,
+    paginationOptions: { type: 'none' },
+  });
+
+  const search = { value: '' };
+  const statusFilter = 'all';
+  const osFilter = 'all';
+
+  const emptyTitle =
+    search.value || statusFilter !== 'all' || osFilter !== 'all'
+      ? 'No fleets match your filters'
+      : 'No edge fleets';
+  const emptyBody =
+    search.value || statusFilter !== 'all' || osFilter !== 'all'
+      ? 'Try a different search or clear the status and OS filters.'
+      : 'When fleets are available, they will appear in this list.';
+
   // CELIA-WIP: talk to Paola about how to render the different loading states.
-  const columns = React.useMemo<TableColumn<Fleet>[]>(
+  const columns = React.useMemo<ColumnConfig<FleetTableRow>[]>(
     () => [
       {
-        title: 'Fleet',
-        field: 'metadata.name',
-        highlight: true,
-        render: fleet => <strong>{fleet.metadata.name as string}</strong>,
+        id: 'fleetName',
+        label: 'Fleet',
+        isRowHeader: true,
+        cell: fleet => <Cell>{fleet.metadata.name as string}</Cell>,
       },
       {
-        title: 'Status',
-        render: fleet => <FleetStatus fleetStatus={fleet.status} />,
-      },
-      {
-        title: 'OS target',
-        render: fleet => (
-          <FleetOs fleet={fleet} catalogItemState={catalogItemsState} />
+        id: 'fleetStatus',
+        label: 'Status',
+        cell: fleet => (
+          <Cell>
+            <FleetStatus fleetStatus={fleet.status} />
+          </Cell>
         ),
       },
       {
-        title: 'Devices',
-        render: fleet => <FleetsUpdatedDevicesBar fleet={fleet} />,
+        id: 'fleetOs',
+        label: 'OS target',
+        cell: fleet => (
+          <Cell>
+            <FleetOs fleet={fleet} catalogItemState={catalogItemsState} />
+          </Cell>
+        ),
       },
       {
-        title: 'Actions',
-        render: fleet => (
-          <FleetActions
-            fleet={fleet}
-            catalogItemState={catalogItemsState}
-            onUpdate={onUpdateFleet}
-          />
+        id: 'devices',
+        label: 'Devices',
+        cell: fleet => (
+          <Cell>
+            <FleetsUpdatedDevicesBar fleet={fleet} />
+          </Cell>
+        ),
+      },
+      {
+        id: 'actions',
+        label: 'Actions',
+        cell: fleet => (
+          <Cell>
+            <FleetActions
+              fleet={fleet}
+              catalogItemState={catalogItemsState}
+              onUpdate={onUpdateFleet}
+            />
+          </Cell>
         ),
       },
     ],
@@ -153,12 +193,15 @@ const FleetsPageContent = ({
           }
           totalDevicesCount={devicesSummary?.total}
         />
-        <Table<Fleet>
-          title=""
-          components={{ Actions: NoMaterialTableActions }}
-          options={{ paging: false, search: true }}
-          columns={columns}
-          data={fleets}
+        <Table<FleetTableRow>
+          columnConfig={columns}
+          {...tableProps}
+          emptyState={
+            <div className={styles.fleetListTableEmptyState}>
+              <Text weight="bold">{emptyTitle}</Text>
+              <Text color="secondary">{emptyBody}</Text>
+            </div>
+          }
         />
       </Box>
     </Content>
