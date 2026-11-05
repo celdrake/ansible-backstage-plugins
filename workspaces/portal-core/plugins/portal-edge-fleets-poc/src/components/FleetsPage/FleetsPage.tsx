@@ -23,17 +23,19 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import CloseIcon from '@mui/icons-material/Close';
 
 import type { CatalogItemVersion } from '@ansible/portal-edge-fleets-poc-common/alpha';
-import { type Fleet } from '@ansible/portal-edge-fleets-poc-common';
+import {
+  DeviceSummaryStatusType,
+  type Fleet,
+} from '@ansible/portal-edge-fleets-poc-common';
 import useFleetList, {
   type SuccessFleetListState,
 } from '../../hooks/useFleetList';
+import useDevicesSummary from '../../hooks/useDevicesSummary';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
-import { FleetOs, FleetDevicesCount, FleetActions } from './FleetRowColumns';
+import { FleetOs, FleetActions } from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
-import styles from './FleetsPage.module.css';
-
-import '@backstage/ui/css/styles.css';
+import FleetsUpdatedDevicesBar from './FleetsUpdatedDevicesBar';
 
 // CELIA-WIP: translations??
 // CELIA-WIP: pagination
@@ -47,12 +49,18 @@ const rhemUrl = 'https://edge-manager.redhat.com';
 // Avoid error in the console by providing a custom renderer for actions.
 const NoMaterialTableActions = () => null;
 
-const NumberBox = ({ number, label }: { number: number; label: string }) => {
+const CountBox = ({
+  count,
+  label,
+}: {
+  count: number | string | undefined;
+  label: string;
+}) => {
   return (
     <div style={{ marginBottom: 20 }}>
       <div>
         <Text variant="body-large" color="primary">
-          {number}
+          {count ?? '-'}
         </Text>
       </div>
       <div>
@@ -66,15 +74,20 @@ const NumberBox = ({ number, label }: { number: number; label: string }) => {
 
 const FleetsPageSummary = ({
   fleetCount,
-  offlineDevicesCount,
+  onlineDevicesCount,
+  totalDevicesCount,
 }: {
   fleetCount: number;
-  offlineDevicesCount: number;
+  onlineDevicesCount: number | undefined;
+  totalDevicesCount: number | undefined;
 }) => {
+  const onlineDeviceText = onlineDevicesCount
+    ? `${onlineDevicesCount}/${totalDevicesCount}`
+    : '-';
   return (
     <Flex>
-      <NumberBox number={fleetCount} label="Fleets" />
-      <NumberBox number={offlineDevicesCount} label="Devices offline" />
+      <CountBox count={fleetCount} label="Fleets" />
+      <CountBox count={onlineDeviceText} label="Devices online" />
     </Flex>
   );
 };
@@ -86,7 +99,8 @@ const FleetsPageContent = ({
   fleetListState: SuccessFleetListState;
   onUpdateFleet: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
 }) => {
-  const { fleets, totalOfflineDevices } = fleetListState;
+  const { fleets } = fleetListState;
+  const { data: devicesSummary } = useDevicesSummary();
   const fleetNames = fleets.map(fleet => fleet.metadata.name as string);
   const catalogItemsState = useFleetCatalogItems(fleetNames);
 
@@ -111,7 +125,7 @@ const FleetsPageContent = ({
       },
       {
         title: 'Devices',
-        render: fleet => <FleetDevicesCount fleet={fleet} />,
+        render: fleet => <FleetsUpdatedDevicesBar fleet={fleet} />,
       },
       {
         title: 'Actions',
@@ -132,7 +146,12 @@ const FleetsPageContent = ({
       <Box>
         <FleetsPageSummary
           fleetCount={fleets.length}
-          offlineDevicesCount={totalOfflineDevices}
+          onlineDevicesCount={
+            devicesSummary?.summaryStatus[
+              DeviceSummaryStatusType.DeviceSummaryStatusOnline
+            ]
+          }
+          totalDevicesCount={devicesSummary?.total}
         />
         <Table<Fleet>
           title=""

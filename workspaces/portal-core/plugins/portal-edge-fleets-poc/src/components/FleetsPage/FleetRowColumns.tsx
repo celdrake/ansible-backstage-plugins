@@ -1,7 +1,5 @@
 import {
   CatalogItemRefSpec,
-  DeviceOsSpec,
-  DeviceSummaryStatusType,
   Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
 import { StatusPending } from '@backstage/core-components';
@@ -93,19 +91,7 @@ export const FleetOs = ({
   );
 };
 
-export const FleetDevicesCount = ({ fleet }: { fleet: Fleet }) => {
-  const summary = fleet.status?.devicesSummary;
-  if (!summary) {
-    // CELIA-WIP: Discuss the UX for a missing addDevicesSummary response.
-    return <StatusPending>WIP</StatusPending>;
-  }
-
-  const online =
-    summary.summaryStatus[DeviceSummaryStatusType.DeviceSummaryStatusOnline] ??
-    0;
-  return `${online}/${summary.total} online`;
-};
-
+// CELIA-WIP: Not used right now.
 export const FleetMaintenanceWindow = ({ fleet }: { fleet: Fleet }) => {
   const updatePolicy = fleet.spec.template.spec.updatePolicy;
   const updateSchedule = updatePolicy?.updateSchedule;
@@ -133,7 +119,7 @@ export const FleetActions = ({
   }
 
   const { catalogItem, versionToUpdate } = getOsCatalogItem(
-    fleet,
+    osSpec.catalogItemRef,
     catalogItemState.catalogItemsList.items,
   );
 

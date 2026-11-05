@@ -6,7 +6,6 @@ import useFlightCtlApiFetch from './useFlightCtlApiFetch';
 export type SuccessFleetListState = {
   status: 'loaded';
   fleets: Fleet[];
-  totalOfflineDevices: number;
   refetch: () => void;
 };
 
@@ -14,12 +13,6 @@ export type FleetListState =
   | { status: 'loading'; refetch: () => void }
   | { status: 'error'; message: string; refetch: () => void }
   | SuccessFleetListState;
-
-const getTotalOfflineDevices = (fleets: Fleet[]) => {
-  return fleets.reduce((acc, fleet) => {
-    return acc + (fleet.status?.devicesSummary?.total ?? 0);
-  }, 0);
-};
 
 const useFleetList = (): FleetListState => {
   const flightctlFetch = useFlightCtlApiFetch();
@@ -34,7 +27,6 @@ const useFleetList = (): FleetListState => {
     return {
       status: 'loaded',
       fleets: fleetList.items,
-      totalOfflineDevices: getTotalOfflineDevices(fleetList.items),
       refetch,
     };
   }

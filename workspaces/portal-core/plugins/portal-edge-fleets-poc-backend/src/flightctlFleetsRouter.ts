@@ -106,6 +106,17 @@ async function fetchFleets(
   return flightctlApiCall(url, options);
 }
 
+// Retrieves the device summary without fetching the device list.
+async function fetchDeviceSummary(
+  options: FlightctlRequestOptions,
+): Promise<FlightctlApiResult> {
+  const url = new URL('/api/v1/devices', options.apiBaseUrl);
+  url.searchParams.set('org_id', options.organizationId);
+  url.searchParams.set('summaryOnly', 'true');
+
+  return flightctlApiCall(url, options);
+}
+
 // Retrieves the catalog items associated to the given fleet names.
 async function fetchCatalogItems(
   options: FlightctlRequestOptions,
@@ -277,6 +288,10 @@ export function createFlightctlFleetsRouter(
 
   router.get('/fleets', async (req, res) => {
     await proxyFlightctlRequest(req, res, options, fetchFleets);
+  });
+
+  router.get('/devices', async (req, res) => {
+    await proxyFlightctlRequest(req, res, options, fetchDeviceSummary);
   });
 
   router.patch(

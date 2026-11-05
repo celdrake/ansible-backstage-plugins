@@ -1,0 +1,54 @@
+.fleetUpdatedDevicesBarWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-2);
+  min-width: 0;
+}
+
+.fleetUpdatedDevicesBar {
+  display: flex;
+  height: 8px;
+  border-radius: var(--bui-radius-1);
+  overflow: hidden;
+  background-color: var(--bui-bg-neutral-2);
+}
+
+.fleetUpdatedDevicesBarSegment {
+  height: 100%;
+  min-width: 0;
+}
+
+.fleetUpdatedDevicesBarSegmentSuccess {
+  background-color: var(--bui-fg-success);
+}
+
+.fleetUpdatedDevicesBarSegmentInfo {
+  background-color: var(--bui-fg-info);
+}
+
+.fleetUpdatedDevicesBarSegmentWarning {
+  background-color: var(--bui-fg-warning);
+}
+
+.fleetUpdatedDevicesBarSegmentNeutral {
+  background-color: var(--bui-fg-secondary);
+}
+
+.fleetDevicesProgressCounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bui-space-1) var(--bui-space-3);
+}
+
+.fleetDevicesCountItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fleetDevicesSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
