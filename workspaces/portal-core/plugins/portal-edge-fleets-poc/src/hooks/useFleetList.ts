@@ -51,6 +51,7 @@ const useFleetList = () => {
   const [searchError, setSearchError] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [continueTokens, setContinueTokens] = useState<string[]>([]);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const flightctlFetch = useFlightCtlApiFetch();
 
   const onSearchChange = useCallback(
@@ -74,7 +75,7 @@ const useFleetList = () => {
     currentPage > 1 ? continueTokens[currentPage - 2] : undefined;
 
   const request = useMemo<FleetListRequest>(() => {
-    const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+    const params = new URLSearchParams({ limit: String(pageSize) });
     if (nameSearch) {
       params.set('fieldSelector', `metadata.name contains ${nameSearch}`);
     }
@@ -86,7 +87,7 @@ const useFleetList = () => {
       page: currentPage,
       search: nameSearch,
     };
-  }, [continueToken, currentPage, nameSearch]);
+  }, [continueToken, currentPage, nameSearch, pageSize]);
 
   const [debouncedRequest, setDebouncedRequest] = useState(request);
   useEffect(() => {
@@ -140,9 +141,7 @@ const useFleetList = () => {
     data: fleets, // the mapper added the "id" property to the items
     search: nameSearch,
     paginationOptions: {
-      type: 'page',
-      pageSize: PAGE_SIZE,
-      pageSizeOptions: [PAGE_SIZE],
+      type: 'none',
     },
     onSearchChange,
   });
@@ -187,8 +186,8 @@ const useFleetList = () => {
 
   const pagination = useMemo(
     () => ({
-      type: 'page' as const,
-      pageSize: PAGE_SIZE,
+      type: 'page',
+      pageSize,
       offset,
       totalCount: displayedTotalCount,
       hasNextPage:
@@ -197,10 +196,13 @@ const useFleetList = () => {
         currentPage > 1 && !periodicState.isUpdating && !isDebouncing,
       onNextPage,
       onPreviousPage,
+      onPageSizeChange: (newPageSize: number) => {
+        setPageSize(newPageSize);
+      },
       showPageSizeOptions: true,
       showPaginationLabel: true,
       getLabel: () =>
-        `${currentPage} of ${Math.ceil((displayedTotalCount ?? 0) / PAGE_SIZE)}`,
+        `${currentPage} of ${Math.ceil((displayedTotalCount ?? 0) / pageSize)}`,
     }),
     [
       currentPage,
