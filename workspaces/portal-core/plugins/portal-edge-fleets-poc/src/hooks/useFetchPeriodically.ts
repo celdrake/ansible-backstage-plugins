@@ -13,9 +13,10 @@ export type PeriodicFetchState<T> = PeriodicFetchDataState<T> & {
   refetch: () => void;
 };
 
-type UseFetchPeriodicallyOptions = {
+type UseFetchPeriodicallyOptions<T> = {
   enabled?: boolean;
   intervalMs?: number;
+  mapper?: (data: T) => T;
 };
 
 const toError = (error: unknown): Error =>
@@ -26,7 +27,8 @@ const useFetchPeriodically = <T>(
   {
     enabled = true,
     intervalMs = DEFAULT_INTERVAL_MS,
-  }: UseFetchPeriodicallyOptions = {},
+    mapper,
+  }: UseFetchPeriodicallyOptions<T> = {},
 ): PeriodicFetchState<T> => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [state, setState] = useState<PeriodicFetchDataState<T>>({
@@ -66,7 +68,7 @@ const useFetchPeriodically = <T>(
         const data = await fetcher(abortController.signal);
         if (!active || abortController.signal.aborted) return;
         setState({
-          data,
+          data: mapper ? mapper(data) : data,
           isLoading: false,
           error: undefined,
           isUpdating: false,

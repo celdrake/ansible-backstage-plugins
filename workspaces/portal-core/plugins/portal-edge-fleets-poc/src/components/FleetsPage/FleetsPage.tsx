@@ -33,6 +33,7 @@ import FleetsUpdatedDevicesBar from './FleetsUpdatedDevicesBar';
 import FleetOsUpdateDialog from './FleetOsUpdateDialog';
 
 import styles from './FleetsPage.module.css';
+import useFleetsCount from '../../hooks/useFleetsCount';
 // CELIA-WIP: translations??
 // CELIA-WIP: which fleets are fetched? which order?
 
@@ -65,20 +66,20 @@ const CountBox = ({
 };
 
 const FleetsPageSummary = ({
-  fleetCount,
   onlineDevicesCount,
   totalDevicesCount,
 }: {
-  fleetCount: number | undefined;
   onlineDevicesCount: number | undefined;
   totalDevicesCount: number | undefined;
 }) => {
+  const { data: fleetsCount } = useFleetsCount();
+
   const onlineDeviceText = onlineDevicesCount
     ? `${onlineDevicesCount}/${totalDevicesCount}`
     : '-';
   return (
     <Flex>
-      <CountBox count={fleetCount} label="Fleets on page" />
+      <CountBox count={fleetsCount} label="Fleets" />
       <CountBox count={onlineDeviceText} label="Devices online" />
     </Flex>
   );
@@ -109,6 +110,7 @@ const FleetsPageContent = ({
   const {
     tableProps,
     search,
+    searchError,
     fleets,
     pagination,
     isLoading,
@@ -116,10 +118,9 @@ const FleetsPageContent = ({
     isDebouncing,
     error,
   } = fleetListState;
-  const currentFleets = fleets ?? [];
-  const fleetNames = currentFleets.map(fleet => fleet.metadata.name as string);
+  const fleetNames = fleets?.map(fleet => fleet.metadata.name as string);
   const { data: devicesSummary } = useDevicesSummary();
-  const catalogItemsState = useFleetCatalogItems(fleetNames);
+  const catalogItemsState = useFleetCatalogItems(fleetNames ?? []);
 
   // CELIA-WIP: talk to Paola about how to render the different loading states.
   const columns = React.useMemo<ColumnConfig<EdgeFleet>[]>(
@@ -187,7 +188,6 @@ const FleetsPageContent = ({
           />
         )}
         <FleetsPageSummary
-          fleetCount={fleets?.length}
           onlineDevicesCount={
             devicesSummary?.summaryStatus[
               DeviceSummaryStatusType.DeviceSummaryStatusOnline
@@ -200,11 +200,17 @@ const FleetsPageContent = ({
           placeholder="Search fleets..."
           {...search}
         />
+        {searchError && (
+          <Alert
+            status="danger"
+            title="Invalid search"
+            description={searchError}
+            icon
+          />
+        )}
         <Table<EdgeFleet>
           columnConfig={columns}
-          emptyState={
-            <FleetsTableEmptyState hasSearch={!!search.value.trim()} />
-          }
+          emptyState={<FleetsTableEmptyState hasSearch={!!search.value} />}
           {...tableProps}
           pagination={pagination}
           isPending={isLoading}
