@@ -1,0 +1,23 @@
+.updateAvailableBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  border: 1px solid #f0ab00;
+  background-color: rgba(240, 171, 0, 0.08);
+  color: #8a6a00;
+  font-size: var(--bui-font-size-xs);
+  font-weight: var(--bui-font-weight-bold);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.updateAvailableIcon {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  color: #c58c00;
+}

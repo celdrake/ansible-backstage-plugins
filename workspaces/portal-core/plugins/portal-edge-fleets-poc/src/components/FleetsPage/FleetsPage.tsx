@@ -29,13 +29,9 @@ import useFleetList, {
 } from '../../hooks/useFleetList';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
-import {
-  FleetOs,
-  FleetDevicesCount,
-  FleetMaintenanceWindow,
-  FleetActions,
-} from './FleetRowColumns';
+import { FleetOs, FleetDevicesCount, FleetActions } from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
+import styles from './FleetsPage.module.css';
 
 import '@backstage/ui/css/styles.css';
 

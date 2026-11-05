@@ -1,39 +1,39 @@
 import semver from 'semver';
-import {
-  CatalogItemRefSpec,
-  Fleet,
-} from '@ansible/portal-edge-fleets-poc-common';
+import { CatalogItemRefSpec } from '@ansible/portal-edge-fleets-poc-common';
 import {
   CatalogItemArtifactType,
   CatalogItem,
   CatalogItemVersion,
 } from '@ansible/portal-edge-fleets-poc-common/alpha';
 
-export const getFleetCatalogItem = (
-  fleet: Fleet,
+export const getOsCatalogItem = (
+  osItemRef: CatalogItemRefSpec,
   catalogItems: CatalogItem[],
 ) => {
-  const osRef = fleet.spec.template.spec.os?.catalogItemRef;
-  if (!osRef) {
+  if (!osItemRef) {
     return {
       catalogItem: undefined,
-      hasUpdates: false,
+      versionToUpdate: undefined,
     };
   }
 
   const catalogItem = catalogItems.find(
     item =>
-      item.metadata.name === osRef.item &&
-      item.metadata.catalog === osRef.catalog,
+      item.metadata.name === osItemRef.item &&
+      item.metadata.catalog === osItemRef.catalog,
   );
 
-  const hasUpdates =
-    !!catalogItem &&
-    getCatalogItemUpdates(catalogItem, osRef.channel, osRef.version).length > 0;
+  const versionToUpdate = catalogItem
+    ? getNextCatalogItemUpdate(
+        catalogItem,
+        osItemRef.channel,
+        osItemRef.version,
+      )
+    : undefined;
 
   return {
     catalogItem,
-    hasUpdates,
+    versionToUpdate,
   };
 };
 
@@ -103,14 +103,16 @@ export const getNextCatalogItemUpdate = (
     (a, b) => semver.rcompare(a.version, b.version),
   )[0];
 
-export const getOsCatalogDisplayText = (
+export const getOsCatalogItemDisplayText = (
+  catalogItem: CatalogItem,
+  version: string,
+) => `${catalogItem.spec.displayName || catalogItem.metadata.name}:${version}`;
+
+export const getOsCatalogRefDisplayText = (
   catalogItemRef: CatalogItemRefSpec,
-  catalogItem: CatalogItem | undefined,
 ) => {
-  if (!catalogItem) {
-    return `${catalogItemRef.item}:${catalogItemRef.version ?? 'unknown'}`;
+  if (!catalogItemRef.version) {
+    return catalogItemRef.item;
   }
-  return `${catalogItem.spec.displayName || catalogItem.metadata.name}:${
-    catalogItemRef.version
-  }`;
+  return `${catalogItemRef.item}:${catalogItemRef.version}`;
 };

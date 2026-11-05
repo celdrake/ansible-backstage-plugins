@@ -61,7 +61,7 @@ const FleetStatus = ({ fleetStatus }: { fleetStatus?: ApiFleetStatus }) => {
 
   const statusLevel = fleetStatusItem.level;
   return (
-    <Flex className={styles.statusCell} gap="2">
+    <Flex className={styles.fleetStatusWrapper} gap="2">
       <span
         className={`${styles.fleetStatusMarker} ${MarkerStyles[statusLevel]}`}
       />

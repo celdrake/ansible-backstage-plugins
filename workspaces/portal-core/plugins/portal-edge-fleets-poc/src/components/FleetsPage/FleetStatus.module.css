@@ -1,4 +1,4 @@
-.statusCell {
+.fleetStatusWrapper {
   display: inline-flex;
   align-items: center;
   gap: var(--bui-space-2);
