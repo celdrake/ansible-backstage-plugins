@@ -5,6 +5,8 @@ import {
 import { compatWrapper } from '@backstage/core-compat-api';
 import RouterIcon from '@material-ui/icons/Router';
 
+import '@backstage/ui/css/styles.css';
+
 export default createFrontendPlugin({
   pluginId: 'edge-fleets-poc',
   extensions: [

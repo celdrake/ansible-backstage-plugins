@@ -112,7 +112,6 @@ const FleetsPageContent = ({
     search,
     searchError,
     fleets,
-    pagination,
     isLoading,
     isUpdating,
     isDebouncing,
@@ -212,7 +211,6 @@ const FleetsPageContent = ({
           columnConfig={columns}
           emptyState={<FleetsTableEmptyState hasSearch={!!search.value} />}
           {...tableProps}
-          pagination={pagination}
           isPending={isLoading}
           isStale={isUpdating || isDebouncing}
         />
@@ -225,13 +223,6 @@ const FleetsPage = () => {
   const fleetListState = useFleetList();
   const fleetUpdateState = useFleetUpdate(fleetListState.refetch);
   const [showRhemLink, setShowRhemLink] = React.useState(true);
-
-  const content = (
-    <FleetsPageContent
-      fleetListState={fleetListState}
-      onUpdateFleet={fleetUpdateState.openFleetUpdate}
-    />
-  );
 
   return (
     <Page themeId="app">
@@ -270,8 +261,10 @@ const FleetsPage = () => {
           )
         }
       />
-      {content}
-
+      <FleetsPageContent
+        fleetListState={fleetListState}
+        onUpdateFleet={fleetUpdateState.openFleetUpdate}
+      />
       <FleetOsUpdateDialog fleetUpdateState={fleetUpdateState} />
     </Page>
   );

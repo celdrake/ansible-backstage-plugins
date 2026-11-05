@@ -118,15 +118,14 @@ export const FleetActions = ({
     return <StatusPending>Loading</StatusPending>;
   }
 
-  const { catalogItem, versionToUpdate } = getOsCatalogItem(
+  const { versionToUpdate } = getOsCatalogItem(
     osSpec.catalogItemRef,
     catalogItemState.catalogItemsList.items,
   );
 
-  if (catalogItem && versionToUpdate) {
-    return (
-      <Button onClick={() => onUpdate(fleet, versionToUpdate)}>Update</Button>
-    );
-  }
-  return null;
+  return versionToUpdate ? (
+    <Button onClick={() => onUpdate(fleet, versionToUpdate)}>
+      Update OS target
+    </Button>
+  ) : null;
 };

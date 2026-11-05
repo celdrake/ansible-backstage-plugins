@@ -186,10 +186,12 @@ const useFleetList = () => {
 
   const pagination = useMemo(
     () => ({
-      type: 'page',
+      type: 'page' as const,
       pageSize,
       offset,
       totalCount: displayedTotalCount,
+      getLabel: () =>
+        `${currentPage} of ${Math.ceil((displayedTotalCount ?? 0) / pageSize)}`,
       hasNextPage:
         isCurrentPageResponse && Boolean(continueTokens[currentPage - 1]),
       hasPreviousPage:
@@ -198,11 +200,11 @@ const useFleetList = () => {
       onPreviousPage,
       onPageSizeChange: (newPageSize: number) => {
         setPageSize(newPageSize);
+        setCurrentPage(1);
+        setContinueTokens([]);
       },
       showPageSizeOptions: true,
       showPaginationLabel: true,
-      getLabel: () =>
-        `${currentPage} of ${Math.ceil((displayedTotalCount ?? 0) / pageSize)}`,
     }),
     [
       currentPage,
@@ -219,11 +221,13 @@ const useFleetList = () => {
   );
 
   return {
-    tableProps,
+    tableProps: {
+      ...tableProps,
+      pagination,
+    },
     search,
     searchError,
     fleets,
-    pagination,
     isLoading: periodicState.isLoading,
     isUpdating: periodicState.isUpdating,
     isDebouncing,
