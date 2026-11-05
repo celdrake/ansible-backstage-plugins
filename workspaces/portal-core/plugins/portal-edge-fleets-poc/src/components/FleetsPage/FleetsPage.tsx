@@ -11,7 +11,6 @@ import {
   SearchField,
   Table,
   Text,
-  useTable,
 } from '@backstage/ui';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import CloseIcon from '@mui/icons-material/Close';
@@ -23,7 +22,7 @@ import {
 } from '@ansible/portal-edge-fleets-poc-common';
 import useFleetList, {
   type EdgeFleet,
-  type SuccessFleetListState,
+  type FleetListState,
 } from '../../hooks/useFleetList';
 import useDevicesSummary from '../../hooks/useDevicesSummary';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
@@ -35,7 +34,6 @@ import FleetOsUpdateDialog from './FleetOsUpdateDialog';
 
 import styles from './FleetsPage.module.css';
 // CELIA-WIP: translations??
-// CELIA-WIP: pagination
 // CELIA-WIP: which fleets are fetched? which order?
 
 // CELIA-WIP: Is banner dismissable forever? What are the rules to dismiss it?
@@ -71,7 +69,7 @@ const FleetsPageSummary = ({
   onlineDevicesCount,
   totalDevicesCount,
 }: {
-  fleetCount: number;
+  fleetCount: number | undefined;
   onlineDevicesCount: number | undefined;
   totalDevicesCount: number | undefined;
 }) => {
@@ -80,7 +78,7 @@ const FleetsPageSummary = ({
     : '-';
   return (
     <Flex>
-      <CountBox count={fleetCount} label="Fleets" />
+      <CountBox count={fleetCount} label="Fleets on page" />
       <CountBox count={onlineDeviceText} label="Devices online" />
     </Flex>
   );
@@ -105,19 +103,23 @@ const FleetsPageContent = ({
   fleetListState,
   onUpdateFleet,
 }: {
-  fleetListState: SuccessFleetListState;
+  fleetListState: FleetListState;
   onUpdateFleet: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
 }) => {
-  const { fleets } = fleetListState;
-  const fleetNames = fleets.map(fleet => fleet.metadata.name as string);
+  const {
+    tableProps,
+    search,
+    fleets,
+    pagination,
+    isLoading,
+    isUpdating,
+    isDebouncing,
+    error,
+  } = fleetListState;
+  const currentFleets = fleets ?? [];
+  const fleetNames = currentFleets.map(fleet => fleet.metadata.name as string);
   const { data: devicesSummary } = useDevicesSummary();
   const catalogItemsState = useFleetCatalogItems(fleetNames);
-
-  const { tableProps, search } = useTable<EdgeFleet>({
-    mode: 'complete',
-    data: fleets,
-    paginationOptions: { type: 'none' },
-  });
 
   // CELIA-WIP: talk to Paola about how to render the different loading states.
   const columns = React.useMemo<ColumnConfig<EdgeFleet>[]>(
@@ -175,8 +177,17 @@ const FleetsPageContent = ({
   return (
     <Content>
       <Box>
+        {error && (
+          <Alert
+            status="danger"
+            title="Unable to load fleets"
+            description={error.message}
+            icon
+            mb="4"
+          />
+        )}
         <FleetsPageSummary
-          fleetCount={fleets.length}
+          fleetCount={fleets?.length}
           onlineDevicesCount={
             devicesSummary?.summaryStatus[
               DeviceSummaryStatusType.DeviceSummaryStatusOnline
@@ -191,8 +202,13 @@ const FleetsPageContent = ({
         />
         <Table<EdgeFleet>
           columnConfig={columns}
-          emptyState={<FleetsTableEmptyState hasSearch={!!search.value} />}
+          emptyState={
+            <FleetsTableEmptyState hasSearch={!!search.value.trim()} />
+          }
           {...tableProps}
+          pagination={pagination}
+          isPending={isLoading}
+          isStale={isUpdating || isDebouncing}
         />
       </Box>
     </Content>
@@ -204,31 +220,12 @@ const FleetsPage = () => {
   const fleetUpdateState = useFleetUpdate(fleetListState.refetch);
   const [showRhemLink, setShowRhemLink] = React.useState(true);
 
-  let content;
-  if (fleetListState.status === 'loading') {
-    content = (
-      <Text variant="body-medium" color="secondary">
-        Loading fleets…
-      </Text>
-    );
-  } else if (fleetListState.status === 'error') {
-    content = (
-      <Alert
-        status="danger"
-        title="Unable to load fleets"
-        description={fleetListState.message}
-        icon
-        mb="4"
-      />
-    );
-  } else {
-    content = (
-      <FleetsPageContent
-        fleetListState={fleetListState}
-        onUpdateFleet={fleetUpdateState.openFleetUpdate}
-      />
-    );
-  }
+  const content = (
+    <FleetsPageContent
+      fleetListState={fleetListState}
+      onUpdateFleet={fleetUpdateState.openFleetUpdate}
+    />
+  );
 
   return (
     <Page themeId="app">

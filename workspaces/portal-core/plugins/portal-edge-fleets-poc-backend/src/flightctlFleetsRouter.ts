@@ -23,6 +23,12 @@ type FlightctlRouterOptions = {
 
 type FlightctlApiResult = { status: number; body: unknown };
 
+type FleetListQuery = {
+  fieldSelector?: string;
+  limit?: string;
+  continueToken?: string;
+};
+
 type FlightctlApiCallOptions = {
   method?: 'GET' | 'PATCH';
   body?: string;
@@ -98,10 +104,20 @@ async function flightctlApiCall(
 // Retrieves the fleets.
 async function fetchFleets(
   options: FlightctlRequestOptions,
+  query: FleetListQuery,
 ): Promise<FlightctlApiResult> {
   const url = new URL('/api/v1/fleets', options.apiBaseUrl);
   url.searchParams.set('org_id', options.organizationId);
   url.searchParams.set('addDevicesSummary', 'true');
+  if (query.fieldSelector) {
+    url.searchParams.set('fieldSelector', query.fieldSelector);
+  }
+  if (query.limit) {
+    url.searchParams.set('limit', query.limit);
+  }
+  if (query.continueToken) {
+    url.searchParams.set('continue', query.continueToken);
+  }
 
   return flightctlApiCall(url, options);
 }
@@ -169,6 +185,10 @@ function isValidString(
   acceptEmpty: boolean = false,
 ): value is string {
   return typeof value === 'string' && (acceptEmpty || value.length > 0);
+}
+
+function readOptionalQueryString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }
 
 function isFleetPatch(value: unknown): value is PatchRequest {
@@ -287,7 +307,14 @@ export function createFlightctlFleetsRouter(
   const router = express.Router();
 
   router.get('/fleets', async (req, res) => {
-    await proxyFlightctlRequest(req, res, options, fetchFleets);
+    const query: FleetListQuery = {
+      fieldSelector: readOptionalQueryString(req.query.fieldSelector),
+      limit: readOptionalQueryString(req.query.limit),
+      continueToken: readOptionalQueryString(req.query.continue),
+    };
+    await proxyFlightctlRequest(req, res, options, requestOptions =>
+      fetchFleets(requestOptions, query),
+    );
   });
 
   router.get('/devices', async (req, res) => {
