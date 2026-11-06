@@ -212,7 +212,7 @@ const FleetsPageContent = ({
           emptyState={<FleetsTableEmptyState hasSearch={!!search.value} />}
           {...tableProps}
           isPending={isLoading}
-          isStale={isUpdating || isDebouncing}
+          isStale={isDebouncing}
         />
       </Box>
     </Content>

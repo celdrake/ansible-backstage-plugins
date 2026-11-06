@@ -3,9 +3,8 @@ import { useTable } from '@backstage/ui';
 import type { Fleet, FleetList } from '@ansible/portal-edge-fleets-poc-common';
 import useFetchPeriodically from './useFetchPeriodically';
 import useFlightCtlApiFetch from './useFlightCtlApiFetch';
+import { usePageSize } from './usePageSize';
 
-// Keep the page size aligned with the Flight Control fleet list.
-const PAGE_SIZE = 5;
 const SEARCH_DEBOUNCE_MS = 1000;
 
 // Adjust the type so it has an "id" and can be used on the table.
@@ -51,8 +50,8 @@ const useFleetList = () => {
   const [searchError, setSearchError] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [continueTokens, setContinueTokens] = useState<string[]>([]);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const flightctlFetch = useFlightCtlApiFetch();
+  const { pageSize, setPageSize } = usePageSize();
 
   const onSearchChange = useCallback(
     (value: string) => {
@@ -158,7 +157,7 @@ const useFleetList = () => {
     ? response?.fleetList
     : undefined;
   const hasNextPageFromResponse = Boolean(currentPageList?.metadata.continue);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
   const remainingItemCount = currentPageList?.metadata.remainingItemCount;
   const totalCount = currentPageList
     ? remainingItemCount === undefined
@@ -215,6 +214,7 @@ const useFleetList = () => {
       offset,
       onNextPage,
       onPreviousPage,
+      pageSize,
       periodicState.isUpdating,
       totalCount,
     ],
