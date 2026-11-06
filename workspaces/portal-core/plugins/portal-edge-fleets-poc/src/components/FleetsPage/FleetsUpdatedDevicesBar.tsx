@@ -3,8 +3,7 @@ import {
   DeviceUpdatedStatusType,
   Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
-import { StatusPending } from '@backstage/core-components';
-import { Text, Tooltip, TooltipTrigger } from '@backstage/ui';
+import { Text } from '@backstage/ui';
 import styles from './FleetsUpdatedDevicesBar.module.css';
 
 const getDevicesUpdateBreakdown = (
@@ -64,32 +63,30 @@ const FleetsUpdatedDevicesBar = ({ fleet }: { fleet: Fleet }) => {
         aria-label={statusDescription}
       >
         {segments.map(({ status, label, count, className }) => (
-          <TooltipTrigger key={status}>
-            <div
-              className={`${styles.fleetUpdatedDevicesBarSegment} ${className}`}
-              style={{ width: `${(count / (summary.total || 1)) * 100}%` }}
-            />
-            <Tooltip>{`${count} ${label.toLowerCase()}`}</Tooltip>
-          </TooltipTrigger>
+          <div
+            key={status}
+            className={`${styles.fleetUpdatedDevicesBarSegment} ${className}`}
+            style={{
+              width: `${(count / (summary.total || 1)) * 100}%`,
+            }}
+            aria-label={`${count} ${label.toLowerCase()}`}
+          />
         ))}
       </div>
       <div className={styles.fleetDevicesProgressCounts}>
         {segments.map(({ status, label, count, className }) => (
-          <TooltipTrigger key={status}>
-            <span className={styles.fleetDevicesCountItem}>
-              <span
-                className={`${styles.fleetDevicesSwatch} ${className}`}
-                aria-hidden="true"
-              />
-              <Text variant="body-small" weight="bold">
-                {count}
-              </Text>
-              <Text variant="body-small" color="secondary">
-                {label}
-              </Text>
-            </span>
-            <Tooltip>{`${count} ${label.toLowerCase()}`}</Tooltip>
-          </TooltipTrigger>
+          <span key={status} className={styles.fleetDevicesCountItem}>
+            <span
+              className={`${styles.fleetDevicesSwatch} ${className}`}
+              aria-hidden="true"
+            />
+            <Text variant="body-small" weight="bold">
+              {count}
+            </Text>
+            <Text variant="body-small" color="secondary">
+              {label}
+            </Text>
+          </span>
         ))}
       </div>
     </div>
