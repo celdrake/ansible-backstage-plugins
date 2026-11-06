@@ -19,22 +19,21 @@ import { RiCloudLine, RiExternalLinkLine } from '@remixicon/react';
 import { Fleet } from '@ansible/portal-edge-fleets-poc-common';
 import useFleetDetails from '../../hooks/useFleetDetails';
 import { getFleetsPath, getRhemHomeUrl } from '../../utils/routes';
-import { getNextCatalogItemUpdate } from '../../utils/catalogItems';
+import {
+  getNextCatalogItemUpdate,
+  getOsCatalogItem,
+} from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import { formatMaintenanceWindow } from '../../utils/time';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 
+import styles from './FleetDetailsPage.module.css';
+
 // CELIA-WIP ADD breadcrumbs, buttons, wrapper content etc
 // See EdgeShellPage for reference
 
 // CELIA-WIP: ADD LATER       <FleetOsUpdateDialog fleetUpdateState={fleetUpdateState} />
-
-const styles = {
-  metaGrid: 'flex flex-col gap-6',
-  metaRow: 'flex justify-between items-center',
-  rhemBanner: 'flex justify-between items-center',
-};
 
 const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
   const fleetName = fleet.metadata.name as string;
@@ -43,18 +42,31 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
   // CELIA-WIP ACTUAL REFETCH FUNCTION NEEDED
   const refetch = () => null;
   const fleetUpdateState = useFleetUpdate(refetch);
-  const { catalogItemsState } = useFleetCatalogItems([fleetName]);
-  const nextCatalogItemUpdate =
-    osCatalogRef &&
-    getNextCatalogItemUpdate(osCatalogRef, fleet.osLabel, fleet.osVersion);
-  const hasUpdates = nextCatalogItemUpdate !== undefined;
+  const catalogItemsState = useFleetCatalogItems([fleetName]);
 
+  // CELIA-WIP: DISCUSS UX WITH PAOLA, page should be renderd saying we can't tell about the OS
+  if (catalogItemsState.status === 'loading') {
+    return <Progress />;
+  }
+  if (catalogItemsState.status === 'error') {
+    return (
+      <Alert status="danger" title="Error loading catalog items">
+        {catalogItemsState.message}
+      </Alert>
+    );
+  }
+
+  const { catalogItem, versionToUpdate } = osCatalogRef
+    ? getOsCatalogItem(osCatalogRef, catalogItemsState.catalogItemsList.items)
+    : { catalogItem: undefined, versionToUpdate: undefined };
+
+  const hasUpdates = versionToUpdate !== undefined;
   const updateSchedule = fleet.spec.template.spec.updatePolicy?.updateSchedule;
 
   return (
     <Flex direction="column" gap="6">
       {hasUpdates && (
-        <div>
+        <div className={styles.updateAvailableBanner}>
           <Flex direction="column" gap="1">
             <Text weight="bold">OS update ready</Text>
             <Text variant="body-small" color="secondary">
@@ -67,7 +79,7 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
             onClick={() =>
               fleetUpdateState.openFleetUpdate(
                 fleet,
-                nextCatalogItemUpdate,
+                versionToUpdate,
                 osCatalogRef?.item || '',
               )
             }
@@ -77,7 +89,7 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
         </div>
       )}
       CELIA-WIP BLOCKER???
-      <div className={styles.metaGrid}>
+      <div className={styles.fleetDetailsMainRow}>
         <Card>
           <CardHeader title="OS target" />
           <CardBody>
@@ -100,7 +112,7 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
                   Available
                 </Text>
                 <Text>
-                  {osCatalogRef?.item} {nextCatalogItemUpdate?.version}
+                  {osCatalogRef?.item} {versionToUpdate?.version}
                 </Text>
               </div>
             )}

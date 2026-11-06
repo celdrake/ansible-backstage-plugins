@@ -45,7 +45,6 @@ const getDevicesUpdateBreakdown = (
 const FleetsUpdatedDevicesBar = ({ fleet }: { fleet: Fleet }) => {
   const summary = fleet.status?.devicesSummary;
   if (!summary) {
-    // CELIA-WIP: Discuss the UX for a missing addDevicesSummary response.
     return 'Device status breakdown not available';
   }
 

@@ -1,0 +1,37 @@
+.fleetDetailsMainRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bui-space-4);
+}
+
+.updateAvailableBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bui-space-4);
+  padding: var(--bui-space-4);
+  border: 1px solid var(--bui-border);
+  border-radius: var(--bui-radius-2);
+  background-color: var(--bui-bg-surface-1);
+}
+
+/* CELIA-WIP: CAN IT BE DONE WITH FLEX ? OR RENAME PROPERLY */
+.metaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--bui-space-3);
+}
+
+.rhemBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bui-space-4);
+  padding: var(--bui-space-4) var(--bui-space-5);
+  border: 1px solid var(--bui-border);
+  border-radius: var(--bui-radius-2);
+  background-color: var(--bui-bg-surface-1);
+}
