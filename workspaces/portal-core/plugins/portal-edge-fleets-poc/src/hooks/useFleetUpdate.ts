@@ -1,12 +1,15 @@
 import { useCallback, useState } from 'react';
 import type { Fleet } from '@ansible/portal-edge-fleets-poc-common';
 import type { CatalogItemVersion } from '@ansible/portal-edge-fleets-poc-common/alpha';
+import { formatMaintenanceWindow } from '../utils/time';
 import useFlightCtlApiFetch from './useFlightCtlApiFetch';
 
 type FleetUpdateRequest = {
   fleetName: string;
   currentVersion: string;
   targetVersion: CatalogItemVersion;
+  targetOsLabel: string;
+  maintenanceWindow: string | undefined;
 };
 
 export type UseFleetUpdateState = {
@@ -14,7 +17,11 @@ export type UseFleetUpdateState = {
   isUpdatingFleet: boolean;
   updateError: string | undefined;
   updateSubmitted: boolean;
-  openFleetUpdate: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
+  openFleetUpdate: (
+    fleet: Fleet,
+    targetVersion: CatalogItemVersion,
+    targetOsLabel: string,
+  ) => void;
   closeFleetUpdate: VoidFunction;
   confirmFleetUpdate: VoidFunction;
   handleFleetUpdateDialogOpen: (isOpen: boolean) => void;
@@ -28,12 +35,22 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
   const [isUpdatingFleet, setIsUpdatingFleet] = useState(false);
 
   const openFleetUpdate = useCallback(
-    (fleet: Fleet, targetVersion: CatalogItemVersion) => {
+    (
+      fleet: Fleet,
+      targetVersion: CatalogItemVersion,
+      targetOsLabel: string,
+    ) => {
+      const updateSchedule =
+        fleet.spec.template.spec.updatePolicy?.updateSchedule;
       setUpdateRequest({
         fleetName: fleet.metadata.name as string,
         currentVersion:
           fleet.spec.template.spec.os?.catalogItemRef?.version || '',
         targetVersion,
+        targetOsLabel,
+        maintenanceWindow: updateSchedule
+          ? formatMaintenanceWindow(updateSchedule)
+          : undefined,
       });
       setUpdateError(undefined);
       setUpdateSubmitted(false);

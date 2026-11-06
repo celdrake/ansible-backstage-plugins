@@ -105,7 +105,11 @@ const FleetsPageContent = ({
   onUpdateFleet,
 }: {
   fleetListState: FleetListState;
-  onUpdateFleet: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
+  onUpdateFleet: (
+    fleet: Fleet,
+    targetVersion: CatalogItemVersion,
+    targetOsLabel: string,
+  ) => void;
 }) => {
   const {
     tableProps,
@@ -113,7 +117,6 @@ const FleetsPageContent = ({
     searchError,
     fleets,
     isLoading,
-    isUpdating,
     isDebouncing,
     error,
   } = fleetListState;

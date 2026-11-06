@@ -146,5 +146,5 @@ export const formatMaintenanceWindow = (schedule: UpdateSchedule): string => {
 
   return `${scheduleDays} from ${formatTime(startMinutes)} to ${formatTime(
     endMinutes,
-  )} (${timeZone})`;
+  )}, in ${timeZone}`;
 };

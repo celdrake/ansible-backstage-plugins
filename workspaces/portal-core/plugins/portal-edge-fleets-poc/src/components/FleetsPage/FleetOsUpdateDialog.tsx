@@ -1,7 +1,5 @@
-import * as React from 'react';
 import {
   Alert,
-  Box,
   Button,
   Dialog,
   DialogBody,
@@ -27,8 +25,8 @@ const FleetOsUpdateDialog = ({
     confirmFleetUpdate,
     handleFleetUpdateDialogOpen,
   } = fleetUpdateState;
-  const fleetName = updateRequest?.fleetName ?? '';
-  const currentVersion = updateRequest?.currentVersion ?? 'unknown';
+  const { fleetName, targetOsLabel, maintenanceWindow } = updateRequest ?? {};
+
   return (
     <Dialog
       isOpen={Boolean(updateRequest)}
@@ -36,23 +34,23 @@ const FleetOsUpdateDialog = ({
       isKeyboardDismissDisabled={isUpdatingFleet}
       onOpenChange={handleFleetUpdateDialogOpen}
     >
-      <DialogHeader>Confirm fleet update</DialogHeader>
+      <DialogHeader>Update OS target</DialogHeader>
       <DialogBody>
-        <Text variant="body-medium">
-          Update the operating system for fleet <strong>{fleetName}</strong>?
-        </Text>
-        <Box mt="3">
-          <Text variant="body-small" color="secondary">
-            Upgrade path
+        <Flex direction="column" gap="4">
+          <Text variant="body-medium">
+            Set <strong>{fleetName}</strong> to target{' '}
+            <strong>{targetOsLabel}</strong>.
           </Text>
-          <Flex align="center" gap="2">
-            <Text variant="body-medium">{currentVersion}</Text>
-            <span aria-hidden="true">→</span>
-            <Text variant="body-medium">
-              {updateRequest?.targetVersion.version}
-            </Text>
-          </Flex>
-        </Box>
+          <Alert
+            status="info"
+            title="Install timing"
+            description={
+              maintenanceWindow
+                ? `Devices pick up the target as they connect during the next maintenance window (${maintenanceWindow}).`
+                : 'Fleet has no maintenance window. Devices pick up the target as they connect.'
+            }
+          />
+        </Flex>
         {updateError && (
           <Alert
             status="danger"
@@ -66,7 +64,7 @@ const FleetOsUpdateDialog = ({
           <Alert
             status="success"
             title="Fleet update requested"
-            description={`Fleet ${fleetName} is configured to update to version ${updateRequest?.targetVersion.version}.`}
+            description={`Fleet ${fleetName} is configured to update to ${targetOsLabel}.`}
             icon
             mt="3"
           />
@@ -91,7 +89,7 @@ const FleetOsUpdateDialog = ({
               onClick={confirmFleetUpdate}
               isPending={isUpdatingFleet}
             >
-              Confirm update
+              Set OS target
             </Button>
           </>
         )}

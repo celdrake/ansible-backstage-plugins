@@ -108,7 +108,11 @@ export const FleetActions = ({
 }: {
   fleet: Fleet;
   catalogItemState: FleetCatalogItemsState;
-  onUpdate: (fleet: Fleet, targetVersion: CatalogItemVersion) => void;
+  onUpdate: (
+    fleet: Fleet,
+    targetVersion: CatalogItemVersion,
+    targetOsLabel: string,
+  ) => void;
 }) => {
   const osSpec = fleet.spec.template.spec.os;
   if (!osSpec?.catalogItemRef || catalogItemState.status === 'error') {
@@ -118,13 +122,21 @@ export const FleetActions = ({
     return <StatusPending>Loading</StatusPending>;
   }
 
-  const { versionToUpdate } = getOsCatalogItem(
+  const { catalogItem, versionToUpdate } = getOsCatalogItem(
     osSpec.catalogItemRef,
     catalogItemState.catalogItemsList.items,
   );
 
-  return versionToUpdate ? (
-    <Button onClick={() => onUpdate(fleet, versionToUpdate)}>
+  return versionToUpdate && catalogItem ? (
+    <Button
+      onClick={() =>
+        onUpdate(
+          fleet,
+          versionToUpdate,
+          getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version),
+        )
+      }
+    >
       Update OS target
     </Button>
   ) : null;
