@@ -1,10 +1,23 @@
+import React from 'react';
 import {
   CatalogItemRefSpec,
   Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
 import { StatusPending } from '@backstage/core-components';
-import type { CatalogItemVersion } from '@ansible/portal-edge-fleets-poc-common/alpha';
-import { Button, Text } from '@backstage/ui';
+import type {
+  CatalogItem,
+  CatalogItemVersion,
+} from '@ansible/portal-edge-fleets-poc-common/alpha';
+import {
+  Button,
+  ButtonIcon,
+  Flex,
+  Menu,
+  MenuItem,
+  MenuTrigger,
+  Text,
+} from '@backstage/ui';
+import { RiMore2Line } from '@remixicon/react';
 import {
   getOsCatalogItem,
   getOsCatalogItemDisplayText,
@@ -101,6 +114,9 @@ export const FleetMaintenanceWindow = ({ fleet }: { fleet: Fleet }) => {
   return formatMaintenanceWindow(updateSchedule);
 };
 
+// CELIA-WIP: UNIFY THIS ROUTE
+const RHEM_HOME_URL = 'https://edge-manager.redhat.com';
+
 export const FleetActions = ({
   fleet,
   catalogItemState,
@@ -114,6 +130,17 @@ export const FleetActions = ({
     targetOsLabel: string,
   ) => void;
 }) => {
+  const handleOsUpdate = React.useCallback(
+    (versionToUpdate: CatalogItemVersion, catalogItem: CatalogItem) => {
+      onUpdate(
+        fleet,
+        versionToUpdate,
+        getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version),
+      );
+    },
+    [fleet, onUpdate],
+  );
+
   const osSpec = fleet.spec.template.spec.os;
   if (!osSpec?.catalogItemRef || catalogItemState.status === 'error') {
     return null;
@@ -127,17 +154,45 @@ export const FleetActions = ({
     catalogItemState.catalogItemsList.items,
   );
 
-  return versionToUpdate && catalogItem ? (
-    <Button
-      onClick={() =>
-        onUpdate(
-          fleet,
-          versionToUpdate,
-          getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version),
-        )
-      }
-    >
-      Update OS target
-    </Button>
-  ) : null;
+  // CELIA-WIP: ROUTE TO FLEET PAGE
+  return (
+    <Flex gap="2">
+      {versionToUpdate && catalogItem && (
+        <Flex direction="column" grow={1}>
+          <Button onClick={() => handleOsUpdate(versionToUpdate, catalogItem)}>
+            Update OS target
+          </Button>
+        </Flex>
+      )}
+      <div className={styles.fleetListActionsMenu}>
+        <MenuTrigger>
+          <ButtonIcon
+            variant="secondary"
+            size="small"
+            aria-label={`Actions for ${fleet.metadata.name}`}
+            icon={<RiMore2Line aria-hidden size={20} />}
+          />
+          <Menu>
+            <MenuItem href={`/fleet/${fleet.metadata.name}`}>
+              Open fleet
+            </MenuItem>
+            {versionToUpdate && catalogItem && (
+              <MenuItem
+                onAction={() => handleOsUpdate(versionToUpdate, catalogItem)}
+              >
+                Update OS target
+              </MenuItem>
+            )}
+            <MenuItem
+              href={RHEM_HOME_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Edge Manager
+            </MenuItem>
+          </Menu>
+        </MenuTrigger>
+      </div>
+    </Flex>
+  );
 };
