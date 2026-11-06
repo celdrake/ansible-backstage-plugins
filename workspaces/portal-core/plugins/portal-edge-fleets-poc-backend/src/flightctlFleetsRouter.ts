@@ -122,6 +122,21 @@ async function fetchFleets(
   return flightctlApiCall(url, options);
 }
 
+// Retrieves a fleet and its device summary.
+async function fetchFleetDetails(
+  options: FlightctlRequestOptions,
+  fleetName: string,
+): Promise<FlightctlApiResult> {
+  const url = new URL(
+    `/api/v1/fleets/${encodeURIComponent(fleetName)}`,
+    options.apiBaseUrl,
+  );
+  url.searchParams.set('org_id', options.organizationId);
+  url.searchParams.set('addDevicesSummary', 'true');
+
+  return flightctlApiCall(url, options);
+}
+
 // Retrieves the device summary without fetching the device list.
 async function fetchDeviceSummary(
   options: FlightctlRequestOptions,
@@ -314,6 +329,18 @@ export function createFlightctlFleetsRouter(
     };
     await proxyFlightctlRequest(req, res, options, requestOptions =>
       fetchFleets(requestOptions, query),
+    );
+  });
+
+  router.get('/fleets/:fleetName', async (req, res) => {
+    const fleetName = req.params.fleetName;
+    if (!FLEET_NAME_PATTERN.test(fleetName)) {
+      res.status(400).json({ error: 'Provide a valid fleet name.' });
+      return;
+    }
+
+    await proxyFlightctlRequest(req, res, options, requestOptions =>
+      fetchFleetDetails(requestOptions, fleetName),
     );
   });
 

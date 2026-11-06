@@ -7,6 +7,13 @@ import {
 } from '@backstage/core-plugin-api';
 import { rhAapAuthApiRef } from '@ansible/aap-app-auth';
 
+class FlightCtlApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'FlightCtlApiError';
+  }
+}
+
 async function readError(response: Response): Promise<string> {
   const body = await response.text();
   if (!body) return `Request failed (${response.status}).`;
@@ -54,7 +61,13 @@ const useFlightCtlApiFetch = () => {
         headers,
         signal,
       });
-      if (!response.ok) throw new Error(await readError(response));
+      if (!response.ok) {
+        const message = await readError(response);
+        throw new FlightCtlApiError(
+          message || `Request failed (${response.status}).`,
+          response.status,
+        );
+      }
 
       const responseBody = await response.text();
       return (responseBody ? JSON.parse(responseBody) : undefined) as T;

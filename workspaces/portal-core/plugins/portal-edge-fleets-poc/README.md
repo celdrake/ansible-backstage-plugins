@@ -7,12 +7,14 @@ those fleets to display their operating system information.
 The page calls these backend API routes:
 
 - `GET /api/edge-fleets-poc/fleets`
+- `GET /api/edge-fleets-poc/fleets/<fleet-name>?addDevicesSummary=true` to
+  retrieve a fleet with its device summary
 - `PATCH /api/edge-fleets-poc/fleets/<fleet-name>` to update a fleet's OS
   catalog reference
 - `GET /api/edge-fleets-poc/catalogitems?fleet=<fleet-name>` (one to 100 fleet
   names are accepted)
 
-Both routes require a signed-in Backstage user and an AAP access token. The
+All routes require a signed-in Backstage user and an AAP access token. The
 backend reads the AAP profile and organization memberships, then sends the AAP
 token to Flightctl. The temporary organization mapping allows AAP organization
 `1` to use the Flightctl organization configured below.

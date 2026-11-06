@@ -22,6 +22,12 @@ type UseFetchPeriodicallyOptions<T> = {
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error));
 
+const isNotFoundError = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'status' in error &&
+  error.status === 404;
+
 const useFetchPeriodically = <T>(
   fetcher: (signal: AbortSignal) => Promise<T>,
   {
@@ -57,6 +63,7 @@ const useFetchPeriodically = <T>(
 
     const fetchAndSchedule = async () => {
       abortController = new AbortController();
+      let shouldScheduleNextFetch = true;
       setState(previous => ({
         ...previous,
         isLoading: previous.data === undefined,
@@ -75,6 +82,7 @@ const useFetchPeriodically = <T>(
         });
       } catch (error) {
         if (!active || abortController.signal.aborted) return;
+        shouldScheduleNextFetch = !isNotFoundError(error);
         setState(previous => ({
           data: previous.data,
           isLoading: false,
@@ -83,7 +91,7 @@ const useFetchPeriodically = <T>(
         }));
       }
 
-      if (active) {
+      if (active && shouldScheduleNextFetch) {
         timeout = setTimeout(fetchAndSchedule, intervalMs);
       }
     };
