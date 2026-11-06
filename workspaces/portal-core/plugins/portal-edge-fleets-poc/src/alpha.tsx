@@ -4,6 +4,7 @@ import {
 } from '@backstage/frontend-plugin-api';
 import { compatWrapper } from '@backstage/core-compat-api';
 import RouterIcon from '@material-ui/icons/Router';
+import { fleetDetailsRoutePath } from './utils/routes';
 
 import '@backstage/ui/css/styles.css';
 
@@ -22,6 +23,19 @@ export default createFrontendPlugin({
             './components/FleetsPage/FleetsPage'
           );
           return compatWrapper(<FleetsPage />);
+        },
+      },
+    }),
+    PageBlueprint.make({
+      name: 'fleet-details',
+      params: {
+        path: fleetDetailsRoutePath,
+        noHeader: true,
+        loader: async () => {
+          const { default: FleetDetailsPage } = await import(
+            './components/FleetDetailsPage/FleetDetailsPage'
+          );
+          return compatWrapper(<FleetDetailsPage />);
         },
       },
     }),

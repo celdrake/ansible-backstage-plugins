@@ -23,6 +23,7 @@ import {
   getOsCatalogItemDisplayText,
   getOsCatalogRefDisplayText,
 } from '../../utils/catalogItems';
+import { getFleetDetailsPath } from '../../utils/routes';
 import { FleetCatalogItemsState } from './types';
 import { formatMaintenanceWindow } from '../../utils/time';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
@@ -154,7 +155,6 @@ export const FleetActions = ({
     catalogItemState.catalogItemsList.items,
   );
 
-  // CELIA-WIP: ROUTE TO FLEET PAGE
   return (
     <Flex gap="2">
       {versionToUpdate && catalogItem && (
@@ -173,7 +173,9 @@ export const FleetActions = ({
             icon={<RiMore2Line aria-hidden size={20} />}
           />
           <Menu>
-            <MenuItem href={`/fleet/${fleet.metadata.name}`}>
+            <MenuItem
+              href={getFleetDetailsPath(fleet.metadata.name as string)}
+            >
               Open fleet
             </MenuItem>
             {versionToUpdate && catalogItem && (

@@ -5,6 +5,7 @@ import {
   Badge,
   Box,
   Cell,
+  CellText,
   ColumnConfig,
   Flex,
   Link,
@@ -27,20 +28,18 @@ import useFleetList, {
 import useDevicesSummary from '../../hooks/useDevicesSummary';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
+import useFleetsCount from '../../hooks/useFleetsCount';
+import { getFleetDetailsPath, getRhemHomeUrl } from '../../utils/routes';
 import { FleetOs, FleetActions } from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
 import FleetsUpdatedDevicesBar from './FleetsUpdatedDevicesBar';
 import FleetOsUpdateDialog from './FleetOsUpdateDialog';
 
 import styles from './FleetsPage.module.css';
-import useFleetsCount from '../../hooks/useFleetsCount';
 // CELIA-WIP: translations??
 // CELIA-WIP: which fleets are fetched? which order?
 
 // CELIA-WIP: Is banner dismissable forever? What are the rules to dismiss it?
-
-// CELIA-WIP: This should be a constant in the config.
-const rhemUrl = 'https://edge-manager.redhat.com';
 
 const CountBox = ({
   count,
@@ -131,7 +130,12 @@ const FleetsPageContent = ({
         id: 'fleetName',
         label: 'Fleet',
         isRowHeader: true,
-        cell: fleet => <Cell>{fleet.metadata.name as string}</Cell>,
+        cell: fleet => {
+          const fleetName = fleet.metadata.name as string;
+          return (
+            <CellText title={fleetName} href={getFleetDetailsPath(fleetName)} />
+          );
+        },
       },
       {
         id: 'fleetStatus',
@@ -248,7 +252,11 @@ const FleetsPage = () => {
               status="info"
               title="Monitor fleet health and apply catalog updates from here. Enroll new devices and change fleet configuration in Edge Manager."
               description={
-                <Link href={rhemUrl} target="_blank" rel="noopener noreferrer">
+                <Link
+                  href={getRhemHomeUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Flex>
                     Open Edge Manager
                     <OpenInNewIcon style={{ fontSize: 16 }} />
