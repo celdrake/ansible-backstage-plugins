@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   CatalogItemRefSpec,
+  ConditionStatus,
   Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
 import { StatusPending } from '@backstage/core-components';
@@ -100,18 +101,30 @@ export const FleetOs = ({
   );
 };
 
-// CELIA-WIP: Not used right now.
-export const FleetMaintenanceWindow = ({ fleet }: { fleet: Fleet }) => {
-  const updatePolicy = fleet.spec.template.spec.updatePolicy;
-  const updateSchedule = updatePolicy?.updateSchedule;
-  if (!updateSchedule) {
-    return 'Updates are immediate';
-  }
-  return formatMaintenanceWindow(updateSchedule);
-};
-
 // CELIA-WIP: UNIFY THIS ROUTE
 const RHEM_HOME_URL = 'https://edge-manager.redhat.com';
+
+const getEdgeManagerLink = (fleet: Fleet) => {
+  // CELIA-WIP: DO we have a direct link for ACM?
+  // REVIEW CORRECT LINK FOR DIFFERENT DEPLOYMENT TYPES
+  return `${RHEM_HOME_URL}/fleets/${fleet.metadata.name}`;
+};
+
+const shouldLinkToEdgeManager = (fleet: Fleet) => {
+  // Fleets with "sync pending / invalid" status should link to Edge Manager
+  const validCondition = fleet.status?.conditions?.find(
+    condition => condition.type === 'Valid',
+  );
+  if (
+    !validCondition ||
+    validCondition.status !== ConditionStatus.ConditionStatusTrue
+  ) {
+    return true;
+  }
+
+  // Fleets that have a custom image, or no image set, should link to Edge Manager
+  return !fleet.spec.template.spec.os?.catalogItemRef;
+};
 
 export const FleetActions = ({
   fleet,
@@ -150,6 +163,8 @@ export const FleetActions = ({
     catalogItemState.catalogItemsList.items,
   );
 
+  const hasRhemLink = shouldLinkToEdgeManager(fleet);
+
   return (
     <Flex gap="2">
       {versionToUpdate && catalogItem && (
@@ -178,13 +193,15 @@ export const FleetActions = ({
                 Update OS target
               </MenuItem>
             )}
-            <MenuItem
-              href={RHEM_HOME_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open Edge Manager
-            </MenuItem>
+            {hasRhemLink && (
+              <MenuItem
+                href={getEdgeManagerLink(fleet)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open Edge Manager
+              </MenuItem>
+            )}
           </Menu>
         </MenuTrigger>
       </div>

@@ -46,8 +46,8 @@ const FleetOsUpdateDialog = ({
             title="Install timing"
             description={
               maintenanceWindow
-                ? `Devices pick up the target as they connect during the next maintenance window (${maintenanceWindow}).`
-                : 'Fleet has no maintenance window. Devices pick up the target as they connect.'
+                ? `Fleet spec updates now. Devices keep their current configuration until the next maintenance window (${maintenanceWindow}), when pending fleet changes can roll out. Managed in Red Hat Edge Manager.`
+                : 'No maintenance window is set. Fleet spec updates now and devices reconcile the new OS target immediately as they connect.'
             }
           />
         </Flex>

@@ -1,4 +1,7 @@
-import { UpdateSchedule } from '@ansible/portal-edge-fleets-poc-common';
+import {
+  DeviceUpdatePolicySpec,
+  UpdateSchedule,
+} from '@ansible/portal-edge-fleets-poc-common';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -131,11 +134,14 @@ const scheduleToWindow = (
   };
 };
 
-export const formatMaintenanceWindow = (schedule: UpdateSchedule): string => {
+export const formatScheduleInfo = (
+  schedule: UpdateSchedule,
+  mode: 'update' | 'download',
+): string | null => {
   const timeZone = getScheduleTimeZone(schedule);
   const cronExpressionParts = scheduleToWindow(schedule);
   if (cronExpressionParts === undefined) {
-    return rawCronExpression(schedule);
+    return null;
   }
 
   const { startMinutes, endMinutes, daysOfWeek } = cronExpressionParts;
@@ -144,7 +150,46 @@ export const formatMaintenanceWindow = (schedule: UpdateSchedule): string => {
       ? 'Daily'
       : `Weekly on ${daysOfWeek.map(day => WEEKDAYS[day]).join(', ')}`;
 
-  return `${scheduleDays} from ${formatTime(startMinutes)} to ${formatTime(
+  return `${
+    mode === 'update' ? 'Update' : 'Download'
+  }  ${scheduleDays} from ${formatTime(startMinutes)} to ${formatTime(
     endMinutes,
-  )}, in ${timeZone}`;
+  )} (${timeZone}); start grace ${schedule.startGraceDuration}`;
+};
+
+// CELIA-WIP: test all the cases
+export const formatMaintenanceWindow = (
+  updatePolicy: DeviceUpdatePolicySpec,
+): string | null => {
+  if (!updatePolicy.updateSchedule && !updatePolicy.downloadSchedule) {
+    return null;
+  }
+
+  const parts = [];
+  if (updatePolicy.downloadSchedule) {
+    const downloadScheduleInfo = formatScheduleInfo(
+      updatePolicy.downloadSchedule,
+      'download',
+    );
+    if (downloadScheduleInfo) {
+      parts.push(downloadScheduleInfo);
+    } else {
+      parts.push(
+        `Download schedule (cron): ${updatePolicy.downloadSchedule?.at}`,
+      );
+    }
+  }
+  if (updatePolicy.updateSchedule) {
+    const updateScheduleInfo = formatScheduleInfo(
+      updatePolicy.updateSchedule,
+      'update',
+    );
+    if (updateScheduleInfo) {
+      parts.push(updateScheduleInfo);
+    } else {
+      parts.push(`Update schedule (cron): ${updatePolicy.updateSchedule?.at}`);
+    }
+  }
+
+  return parts.join('; ');
 };

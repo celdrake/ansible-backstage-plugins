@@ -40,16 +40,15 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
       targetVersion: CatalogItemVersion,
       targetOsLabel: string,
     ) => {
-      const updateSchedule =
-        fleet.spec.template.spec.updatePolicy?.updateSchedule;
+      const updatePolicy = fleet.spec.template.spec.updatePolicy;
       setUpdateRequest({
         fleetName: fleet.metadata.name as string,
         currentVersion:
           fleet.spec.template.spec.os?.catalogItemRef?.version || '',
         targetVersion,
         targetOsLabel,
-        maintenanceWindow: updateSchedule
-          ? formatMaintenanceWindow(updateSchedule)
+        maintenanceWindow: updatePolicy
+          ? formatMaintenanceWindow(updatePolicy)
           : undefined,
       });
       setUpdateError(undefined);

@@ -174,8 +174,6 @@ const useFleetList = () => {
     }
   }, [totalCount]);
 
-  const displayedTotalCount = totalCount ?? lastKnownTotalCount;
-
   const onNextPage = useCallback(() => {
     setCurrentPage(page => page + 1);
   }, []);
@@ -183,14 +181,13 @@ const useFleetList = () => {
     setCurrentPage(page => Math.max(1, page - 1));
   }, []);
 
+  const displayedTotalCount = totalCount ?? lastKnownTotalCount;
   const pagination = useMemo(
     () => ({
       type: 'page' as const,
       pageSize,
       offset,
       totalCount: displayedTotalCount,
-      getLabel: () =>
-        `${currentPage} of ${Math.ceil((displayedTotalCount ?? 0) / pageSize)}`,
       hasNextPage:
         isCurrentPageResponse && Boolean(continueTokens[currentPage - 1]),
       hasPreviousPage:
