@@ -7,13 +7,11 @@ import {
   CardHeader,
   Container,
   Flex,
-  Header,
-  PluginHeader,
   Text,
 } from '@backstage/ui';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@backstage/core-components';
-import { RiCloudLine, RiExternalLinkLine } from '@remixicon/react';
+import { RiExternalLinkLine } from '@remixicon/react';
 
 import {
   DeviceOsSpec,
@@ -35,9 +33,10 @@ import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import { formatMaintenanceWindow } from '../../utils/time';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
-
-import styles from './FleetDetailsPage.module.css';
 import AppLayout from '../Layout/AppLayout';
+import AppHeader from '../Layout/AppHeader';
+import FleetStatus from '../FleetsPage/FleetStatus';
+import styles from './FleetDetailsPage.module.css';
 
 const FleetMaintenanceWindow = ({
   updatePolicy,
@@ -50,6 +49,8 @@ const FleetMaintenanceWindow = ({
   if (!schedule) {
     return null;
   }
+
+  // CELIA-WIP: CHECK WITH UX DESIGN
   return (
     <Card>
       <CardHeader
@@ -58,7 +59,7 @@ const FleetMaintenanceWindow = ({
         })"`}
       />
       <CardBody>
-        <Text>{formatMaintenanceWindow(schedule)}</Text>
+        <Text>{formatMaintenanceWindow(updatePolicy)}</Text>
       </CardBody>
     </Card>
   );
@@ -281,8 +282,11 @@ const FleetDetailsPage = () => {
     error,
   } = useFleetDetails(fleetName);
 
-  const showLoading = (isLoading && !error) || isUpdating;
+  if (isLoading) {
+    return <Progress />;
+  }
 
+  const showLoading = (isLoading && !error) || isUpdating;
   return (
     <AppLayout
       breadcrumbs={[
@@ -290,12 +294,12 @@ const FleetDetailsPage = () => {
         { label: fleetName },
       ]}
       header={
-        <Header
+        <AppHeader
           title={fleetName}
           metadata={[
             {
               label: 'Status',
-              value: <div style={{ border: '2px solid lime' }}>TBD</div>,
+              value: <FleetStatus fleetStatus={fleet?.status} />,
             },
           ]}
         />

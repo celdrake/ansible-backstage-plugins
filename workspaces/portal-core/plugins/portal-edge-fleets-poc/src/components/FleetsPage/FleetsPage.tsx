@@ -7,7 +7,6 @@ import {
   CellText,
   ColumnConfig,
   Flex,
-  Header,
   SearchField,
   Table,
   Text,
@@ -24,6 +23,7 @@ import useFleetUpdate from '../../hooks/useFleetUpdate';
 import useFleetsCount from '../../hooks/useFleetsCount';
 import { getFleetDetailsPath } from '../../utils/routes';
 import AppLayout from '../Layout/AppLayout';
+import AppHeader from '../Layout/AppHeader';
 import { FleetOs, FleetActions } from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
 import FleetDevicesBar from './FleetDevicesBar';
@@ -180,7 +180,7 @@ const FleetsPage = () => {
     <AppLayout
       title="Edge"
       header={
-        <Header
+        <AppHeader
           title="Edge fleets"
           description="Review fleet OS target state and apply catalog OS updates. Full device and image management stays in Red Hat Edge Manager."
           tags={[

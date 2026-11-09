@@ -1,0 +1,4 @@
+/* CELIA-WIP: fixes the title. See if updating to correct Backstage version fixes it instead */
+.appHeader h2 {
+  font-size: 1.5rem !important;
+}
