@@ -106,7 +106,7 @@ export const getNextCatalogItemUpdate = (
 export const getOsCatalogItemDisplayText = (
   catalogItem: CatalogItem,
   version: string,
-) => `${catalogItem.spec.displayName || catalogItem.metadata.name}:${version}`;
+) => `${catalogItem.spec.displayName || catalogItem.metadata.name} ${version}`;
 
 export const getOsCatalogRefDisplayText = (
   catalogItemRef: CatalogItemRefSpec,
@@ -114,5 +114,5 @@ export const getOsCatalogRefDisplayText = (
   if (!catalogItemRef.version) {
     return catalogItemRef.item;
   }
-  return `${catalogItemRef.item}:${catalogItemRef.version}`;
+  return `${catalogItemRef.item} ${catalogItemRef.version}`;
 };

@@ -70,8 +70,10 @@ const FleetCatalogOs = ({
       <FleetOsText text={`Target: ${currentOs}`} />
       <UpdateAvailableBadge />
       <Text variant="body-small" color="secondary">
-        Available:{' '}
-        {getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version)}
+        {`Available ${getOsCatalogItemDisplayText(
+          catalogItem,
+          versionToUpdate.version,
+        )}`}
       </Text>
     </div>
   );

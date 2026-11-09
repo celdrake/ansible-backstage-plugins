@@ -1,11 +1,11 @@
-.fleetUpdatedDevicesBarWrapper {
+.fleetDevicesBarWrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--bui-space-2);
+  gap: var(--bui-space-1);
   min-width: 0;
 }
 
-.fleetUpdatedDevicesBar {
+.fleetDevicesBar {
   display: flex;
   height: 8px;
   border-radius: var(--bui-radius-1);
@@ -13,25 +13,29 @@
   background-color: var(--bui-bg-neutral-2);
 }
 
-.fleetUpdatedDevicesBarSegment {
+.fleetDevicesBarSegment {
   height: 100%;
   min-width: 0;
 }
 
-.fleetUpdatedDevicesBarSegmentSuccess {
+.fleetDevicesBarSegmentSuccess {
   background-color: var(--bui-fg-success);
 }
 
-.fleetUpdatedDevicesBarSegmentInfo {
+.fleetDevicesBarSegmentInfo {
   background-color: var(--bui-fg-info);
 }
 
-.fleetUpdatedDevicesBarSegmentWarning {
+.fleetDevicesBarSegmentWarning {
   background-color: var(--bui-fg-warning);
 }
 
-.fleetUpdatedDevicesBarSegmentNeutral {
-  background-color: var(--bui-fg-secondary);
+.fleetDevicesBarSegmentUnknown {
+  background-color: color-mix(
+    in srgb,
+    var(--bui-fg-secondary) 45%,
+    var(--bui-bg-neutral-2) 55%
+  );
 }
 
 .fleetDevicesProgressCounts {

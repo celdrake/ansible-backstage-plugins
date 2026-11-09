@@ -32,7 +32,7 @@ import useFleetsCount from '../../hooks/useFleetsCount';
 import { getFleetDetailsPath, getRhemHomeUrl } from '../../utils/routes';
 import { FleetOs, FleetActions } from './FleetRowColumns';
 import FleetStatus from './FleetStatus';
-import FleetsUpdatedDevicesBar from './FleetsUpdatedDevicesBar';
+import FleetDevicesBar from './FleetDevicesBar';
 import FleetOsUpdateDialog from './FleetOsUpdateDialog';
 
 import styles from './FleetsPage.module.css';
@@ -160,7 +160,7 @@ const FleetsPageContent = ({
         label: 'Devices',
         cell: fleet => (
           <Cell>
-            <FleetsUpdatedDevicesBar fleet={fleet} />
+            <FleetDevicesBar fleet={fleet} />
           </Cell>
         ),
       },
