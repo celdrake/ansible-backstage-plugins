@@ -175,7 +175,7 @@ const FleetsPage = () => {
   const fleetListState = useFleetList();
   const fleetUpdateState = useFleetUpdate(fleetListState.refetch);
 
-  const { data: fleetCount } = useFleetsCount();
+  const { data: fleetCount, isLoading: isLoadingCount } = useFleetsCount();
   return (
     <AppLayout
       title="Edge"
@@ -185,7 +185,9 @@ const FleetsPage = () => {
           description="Review fleet OS target state and apply catalog OS updates. Full device and image management stays in Red Hat Edge Manager."
           tags={[
             {
-              label: `${fleetCount} ${fleetCount === 1 ? 'fleet' : 'fleets'}`,
+              label: isLoadingCount
+                ? 'Loading...'
+                : `${fleetCount} ${fleetCount === 1 ? 'fleet' : 'fleets'}`,
             },
           ]}
         />

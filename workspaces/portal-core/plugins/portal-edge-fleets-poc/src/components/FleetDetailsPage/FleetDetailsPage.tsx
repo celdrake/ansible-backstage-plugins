@@ -37,6 +37,7 @@ import { formatMaintenanceWindow } from '../../utils/time';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 
 import styles from './FleetDetailsPage.module.css';
+import AppLayout from '../Layout/AppLayout';
 
 const FleetMaintenanceWindow = ({
   updatePolicy,
@@ -283,25 +284,37 @@ const FleetDetailsPage = () => {
   const showLoading = (isLoading && !error) || isUpdating;
 
   return (
-    <Flex direction="column" gap="0">
-      <PluginHeader
-        title="Fleet details"
-        titleLink={getFleetsPath()}
-        icon={<RiCloudLine aria-hidden="true" />}
-      />
-      {showLoading && <Progress />}
-      {error && (
-        <Alert status="danger" title="Error loading fleet details">
-          {error.message}
-        </Alert>
-      )}
-      <Header title={fleetName} />
-      {fleet && (
-        <Container>
-          <FleetDetailsPageContent fleet={fleet} />
-        </Container>
-      )}
-    </Flex>
+    <AppLayout
+      breadcrumbs={[
+        { href: getFleetsPath(), label: 'Fleets' },
+        { label: fleetName },
+      ]}
+      header={
+        <Header
+          title={fleetName}
+          metadata={[
+            {
+              label: 'Status',
+              value: <div style={{ border: '2px solid lime' }}>TBD</div>,
+            },
+          ]}
+        />
+      }
+    >
+      <Flex direction="column" gap="0">
+        {showLoading && <Progress />}
+        {error && (
+          <Alert status="danger" title="Error loading fleet details">
+            {error.message}
+          </Alert>
+        )}
+        {fleet && (
+          <Container>
+            <FleetDetailsPageContent fleet={fleet} />
+          </Container>
+        )}
+      </Flex>
+    </AppLayout>
   );
 };
 
