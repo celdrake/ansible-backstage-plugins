@@ -29,6 +29,14 @@ import { formatMaintenanceWindow } from '../../utils/time';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 import styles from './FleetsPage.module.css';
 
+const FleetOsText = ({ text }: { text: string }) => {
+  return (
+    <Text variant="body-medium" weight="bold" className={styles.osPrimaryText}>
+      {text}
+    </Text>
+  );
+};
+
 const FleetCatalogOs = ({
   osItemRef,
   catalogItemState,
@@ -50,35 +58,20 @@ const FleetCatalogOs = ({
     catalogItemState.catalogItemsList.items,
   );
   if (!catalogItem) {
-    return (
-      <Text variant="body-small" color="secondary">
-        {getOsCatalogRefDisplayText(osItemRef)}
-      </Text>
-    );
+    return <FleetOsText text={getOsCatalogRefDisplayText(osItemRef)} />;
   }
 
   const currentOs = getOsCatalogItemDisplayText(catalogItem, osItemRef.version);
   if (!versionToUpdate) {
-    return <Text variant="body-medium">Target: {currentOs}</Text>;
+    return <FleetOsText text={`Target: ${currentOs}`} />;
   }
   return (
     <div className={styles.fleetsPageStackLayout}>
+      <FleetOsText text={`Target: ${currentOs}`} />
       <UpdateAvailableBadge />
-      <Text variant="body-medium">Target: {currentOs}</Text>
       <Text variant="body-small" color="secondary">
         Available:{' '}
         {getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version)}
-      </Text>
-    </div>
-  );
-};
-
-const FleetCustomOsImage = ({ image }: { image: string }) => {
-  return (
-    <div className={styles.fleetsPageStackLayout}>
-      <Text variant="body-medium">Custom image · Managed in Edge Manager</Text>
-      <Text variant="body-small" color="secondary">
-        {image}
       </Text>
     </div>
   );
@@ -93,9 +86,9 @@ export const FleetOs = ({
 }) => {
   const osSpec = fleet.spec.template.spec.os;
   if (osSpec?.image) {
-    return <FleetCustomOsImage image={osSpec.image} />;
+    return <FleetOsText text={osSpec.image} />;
   } else if (!osSpec?.catalogItemRef) {
-    return <Text variant="body-medium">No OS image defined</Text>;
+    return <FleetOsText text="No OS image defined" />;
   }
   return (
     <FleetCatalogOs
@@ -173,9 +166,7 @@ export const FleetActions = ({
             icon={<RiMore2Line aria-hidden size={20} />}
           />
           <Menu>
-            <MenuItem
-              href={getFleetDetailsPath(fleet.metadata.name as string)}
-            >
+            <MenuItem href={getFleetDetailsPath(fleet.metadata.name as string)}>
               Open fleet
             </MenuItem>
             {versionToUpdate && catalogItem && (

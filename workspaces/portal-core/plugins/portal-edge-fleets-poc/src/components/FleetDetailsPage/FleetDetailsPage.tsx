@@ -9,19 +9,27 @@ import {
   Flex,
   Header,
   PluginHeader,
-  Table,
   Text,
 } from '@backstage/ui';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@backstage/core-components';
 import { RiCloudLine, RiExternalLinkLine } from '@remixicon/react';
 
-import { Fleet } from '@ansible/portal-edge-fleets-poc-common';
+import {
+  DeviceOsSpec,
+  DeviceUpdatePolicySpec,
+  Fleet,
+} from '@ansible/portal-edge-fleets-poc-common';
+import {
+  CatalogItem,
+  CatalogItemVersion,
+} from '@ansible/portal-edge-fleets-poc-common/alpha';
 import useFleetDetails from '../../hooks/useFleetDetails';
 import { getFleetsPath, getRhemHomeUrl } from '../../utils/routes';
 import {
-  getNextCatalogItemUpdate,
   getOsCatalogItem,
+  getOsCatalogItemDisplayText,
+  getOsCatalogRefDisplayText,
 } from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
@@ -30,14 +38,79 @@ import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 
 import styles from './FleetDetailsPage.module.css';
 
-// CELIA-WIP ADD breadcrumbs, buttons, wrapper content etc
-// See EdgeShellPage for reference
+const FleetMaintenanceWindow = ({
+  updatePolicy,
+}: {
+  updatePolicy: DeviceUpdatePolicySpec | undefined;
+}) => {
+  const updateSchedule = updatePolicy?.updateSchedule;
+  const downloadSchedule = updatePolicy?.downloadSchedule;
+  const schedule = updateSchedule || downloadSchedule;
+  if (!schedule) {
+    return null;
+  }
+  return (
+    <Card>
+      <CardHeader
+        title={`"Maintenance window (${
+          updateSchedule ? 'Update' : 'Download'
+        })"`}
+      />
+      <CardBody>
+        <Text>{formatMaintenanceWindow(schedule)}</Text>
+      </CardBody>
+    </Card>
+  );
+};
 
-// CELIA-WIP: ADD LATER       <FleetOsUpdateDialog fleetUpdateState={fleetUpdateState} />
+const FleetOsDetails = ({
+  osSpec,
+  catalogItem,
+  versionToUpdate,
+}: {
+  osSpec: DeviceOsSpec | undefined;
+  catalogItem: CatalogItem | undefined;
+  versionToUpdate: CatalogItemVersion | undefined;
+}) => {
+  const osTitle = osSpec?.catalogItemRef ? 'Target' : 'Image';
+
+  let osContent = null;
+  if (osSpec?.catalogItemRef) {
+    const osDisplayText =
+      catalogItem && versionToUpdate
+        ? getOsCatalogItemDisplayText(catalogItem, versionToUpdate?.version)
+        : getOsCatalogRefDisplayText(osSpec.catalogItemRef);
+    osContent = <Text weight="bold">{osDisplayText}</Text>;
+  } else if (osSpec?.image) {
+    osContent = <Text weight="bold">{`Custom image · ${osSpec.image}`}</Text>;
+  } else {
+    osContent = <Text>Not defined</Text>;
+  }
+
+  return (
+    <div className={styles.metaRow}>
+      <Text variant="body-small" color="secondary">
+        {osTitle}
+      </Text>
+      <Text weight="bold">{osContent}</Text>
+    </div>
+  );
+};
+
+const getFleetOsSource = (osSpec: DeviceOsSpec | undefined) => {
+  if (osSpec?.catalogItemRef) {
+    return 'Managed (updatable from Portal)';
+  }
+  if (osSpec?.image) {
+    return 'Custom image - manage updates in Edge Manager';
+  }
+  return 'No OS image - link in Edge Manager';
+};
 
 const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
   const fleetName = fleet.metadata.name as string;
-  const osCatalogRef = fleet.spec.template.spec.os?.catalogItemRef;
+  const osSpec = fleet.spec.template.spec.os;
+  const osCatalogRef = osSpec?.catalogItemRef;
 
   // CELIA-WIP ACTUAL REFETCH FUNCTION NEEDED
   const refetch = () => null;
@@ -61,7 +134,10 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
     : { catalogItem: undefined, versionToUpdate: undefined };
 
   const hasUpdates = versionToUpdate !== undefined;
-  const updateSchedule = fleet.spec.template.spec.updatePolicy?.updateSchedule;
+  const updatePolicy = fleet.spec.template.spec.updatePolicy;
+  const hasUpdatePolicy = Boolean(
+    updatePolicy?.updateSchedule || updatePolicy?.downloadSchedule,
+  );
 
   return (
     <Flex direction="column" gap="6">
@@ -69,10 +145,16 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
         <div className={styles.updateAvailableBanner}>
           <Flex direction="column" gap="1">
             <Text weight="bold">OS update ready</Text>
-            <Text variant="body-small" color="secondary">
-              Start the OS update here. Install timing follows this fleet&apos;s
-              maintenance window in Edge Manager.
-            </Text>
+            {hasUpdatePolicy ? (
+              <Text variant="body-small" color="secondary">
+                Start the OS update here. Install timing follows this
+                fleet&apos;s maintenance window in Edge Manager.
+              </Text>
+            ) : (
+              <Text variant="body-small" color="secondary">
+                Start the OS update here.
+              </Text>
+            )}
           </Flex>
           <Button
             variant="primary"
@@ -93,34 +175,32 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
         <Card>
           <CardHeader title="OS target" />
           <CardBody>
-            <div className={styles.metaRow}>
-              <Text variant="body-small" color="secondary">
-                goal whatever
-              </Text>
-              <Text weight="bold">os image display</Text>
-            </div>
-            HAS UPDATES???
-            <div className={styles.metaRow}>
-              <Text variant="body-small" color="secondary">
-                Update
-              </Text>
-              <UpdateAvailableBadge />
-            </div>
+            <FleetOsDetails
+              osSpec={osSpec}
+              catalogItem={catalogItem}
+              versionToUpdate={versionToUpdate}
+            />
             {hasUpdates && (
-              <div className={styles.metaRow}>
+              <div className={styles.fleetDetailsMainRowItem}>
                 <Text variant="body-small" color="secondary">
-                  Available
+                  Update
                 </Text>
+                <UpdateAvailableBadge />
+                <div className={styles.fleetDetailsMainRowItem}>
+                  <Text variant="body-small" color="secondary">
+                    Available
+                  </Text>
+                </div>
                 <Text>
                   {osCatalogRef?.item} {versionToUpdate?.version}
                 </Text>
               </div>
             )}
-            <div className={styles.metaRow}>
+            <div className={styles.fleetDetailsMainRowItem}>
               <Text variant="body-small" color="secondary">
                 Source
               </Text>
-              <Text>source display</Text>
+              <Text>{getFleetOsSource(osSpec)}</Text>
             </div>
           </CardBody>
         </Card>
@@ -129,7 +209,7 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
           <CardHeader title="Devices" />
           <CardBody>
             <Text color="secondary">DEVICES NOTE WHATEVER</Text>
-            <div className={styles.metaRow}>
+            <div className={styles.fleetDetailsMainRowItem}>
               <Text variant="body-small" color="secondary">
                 Online
               </Text>
@@ -142,14 +222,7 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
           </CardBody>
         </Card>
 
-        {updateSchedule && (
-          <Card>
-            <CardHeader title="Maintenance window" />
-            <CardBody>
-              <Text>{formatMaintenanceWindow(updateSchedule)}</Text>
-            </CardBody>
-          </Card>
-        )}
+        <FleetMaintenanceWindow updatePolicy={updatePolicy} />
       </div>
       <Card>
         <CardHeader title="Applications" />

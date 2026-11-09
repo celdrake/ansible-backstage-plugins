@@ -4,6 +4,19 @@
   gap: var(--bui-space-4);
 }
 
+@media (max-width: 900px) {
+  .fleetDetailsMainRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fleetDetailsMainRowItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--bui-space-3);
+}
+
 .updateAvailableBanner {
   display: flex;
   flex-wrap: wrap;
