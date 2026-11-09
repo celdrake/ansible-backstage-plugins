@@ -41,15 +41,17 @@ const FleetOsUpdateDialog = ({
             Set <strong>{fleetName}</strong> to target{' '}
             <strong>{targetOsLabel}</strong>.
           </Text>
-          <Alert
-            status="info"
-            title="Install timing"
-            description={
-              maintenanceWindow
-                ? `Fleet spec updates now. Devices keep their current configuration until the next maintenance window (${maintenanceWindow}), when pending fleet changes can roll out. Managed in Red Hat Edge Manager.`
-                : 'No maintenance window is set. Fleet spec updates now and devices reconcile the new OS target immediately as they connect.'
-            }
-          />
+          {!updateSubmitted && (
+            <Alert
+              status="info"
+              title="Install timing"
+              description={
+                maintenanceWindow
+                  ? `Fleet spec updates now. Devices keep their current configuration until the next maintenance window (${maintenanceWindow}), when pending fleet changes can roll out. Managed in Red Hat Edge Manager.`
+                  : 'No maintenance window is set. Fleet spec updates now and devices reconcile the new OS target immediately as they connect.'
+              }
+            />
+          )}
         </Flex>
         {updateError && (
           <Alert
@@ -63,8 +65,8 @@ const FleetOsUpdateDialog = ({
         {updateSubmitted && (
           <Alert
             status="success"
-            title="Fleet update requested"
-            description={`Fleet ${fleetName} is configured to update to ${targetOsLabel}.`}
+            title="Fleet updated successfully"
+            description={`Fleet ${fleetName} was updated to target OS ${targetOsLabel}.`}
             icon
             mt="3"
           />

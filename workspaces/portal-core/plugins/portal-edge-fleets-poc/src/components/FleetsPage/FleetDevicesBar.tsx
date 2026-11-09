@@ -50,7 +50,7 @@ const FleetDevicesBar = ({ fleet }: { fleet: Fleet }) => {
     return 'Device status breakdown not available';
   }
 
-  const segments = getDevicesUpdateBreakdown(summary.updateStatus);
+  const barSegments = getDevicesUpdateBreakdown(summary.updateStatus);
 
   const onlineDevicesCount =
     summary.summaryStatus[DeviceSummaryStatusType.DeviceSummaryStatusOnline] ??
@@ -61,7 +61,7 @@ const FleetDevicesBar = ({ fleet }: { fleet: Fleet }) => {
         {summary.total} devices
       </Text>
       <div className={styles.fleetDevicesBar}>
-        {segments.map(({ status, label, count, className }) => (
+        {barSegments.map(({ status, label, count, className }) => (
           <div
             key={status}
             className={`${styles.fleetDevicesBarSegment} ${className}`}
@@ -73,7 +73,7 @@ const FleetDevicesBar = ({ fleet }: { fleet: Fleet }) => {
         ))}
       </div>
       <div className={styles.fleetDevicesProgressCounts}>
-        {segments.map(({ status, label, count, className }) => (
+        {barSegments.map(({ status, label, count, className }) => (
           <span key={status} className={styles.fleetDevicesCountItem}>
             <span
               className={`${styles.fleetDevicesSwatch} ${className}`}

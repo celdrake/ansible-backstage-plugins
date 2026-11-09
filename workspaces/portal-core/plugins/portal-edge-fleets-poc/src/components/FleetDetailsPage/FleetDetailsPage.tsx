@@ -5,7 +5,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  Container,
   Flex,
   Text,
 } from '@backstage/ui';
@@ -31,11 +30,13 @@ import {
 } from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
+import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
 import { formatMaintenanceWindow } from '../../utils/time';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 import AppLayout from '../Layout/AppLayout';
 import AppHeader from '../Layout/AppHeader';
-import FleetStatus from '../FleetsPage/FleetStatus';
+import FleetStatus, { getFleetStatusItem } from '../FleetsPage/FleetStatus';
+import FleetOsUpdateDialog from '../FleetsPage/FleetOsUpdateDialog';
 import styles from './FleetDetailsPage.module.css';
 
 const FleetMaintenanceWindow = ({
@@ -99,6 +100,39 @@ const FleetOsDetails = ({
   );
 };
 
+const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
+  const fleetStatusItem = getFleetStatusItem(fleet.status);
+
+  let title;
+  let description;
+  if (fleetStatusItem.id === 'Invalid') {
+    title = 'Fleet invalid';
+    description =
+      'Fleet specification problem - OS updates are unavailable. Check with an administrator or open Edge Manager.';
+  } else if (fleetStatusItem.id === 'SyncPending') {
+    title = 'Sync pending';
+    description =
+      'Fleet is still connecting or validating. OS updates are unavailable until status is valid.';
+  } else {
+    const osSpec = fleet.spec.template.spec.os;
+    if (osSpec?.image) {
+      title = 'Custom image · Manage updates in Edge Manager';
+      description =
+        'Device mix relative to the fleet OS image. Manage image changes in Edge Manager.';
+    } else if (!osSpec?.catalogItemRef) {
+      title = 'No OS image defined';
+      description =
+        'Assign an OS image in Edge Manager before Portal can start updates..';
+    }
+  }
+
+  if (!(title && description)) {
+    return null;
+  }
+
+  return <Alert status="warning" title={title} description={description} />;
+};
+
 const getFleetOsSource = (osSpec: DeviceOsSpec | undefined) => {
   if (osSpec?.catalogItemRef) {
     return 'Managed (updatable from Portal)';
@@ -109,14 +143,17 @@ const getFleetOsSource = (osSpec: DeviceOsSpec | undefined) => {
   return 'No OS image - link in Edge Manager';
 };
 
-const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
+const FleetDetailsPageContent = ({
+  fleet,
+  fleetUpdateState,
+}: {
+  fleet: Fleet;
+  fleetUpdateState: UseFleetUpdateState;
+}) => {
   const fleetName = fleet.metadata.name as string;
   const osSpec = fleet.spec.template.spec.os;
   const osCatalogRef = osSpec?.catalogItemRef;
 
-  // CELIA-WIP ACTUAL REFETCH FUNCTION NEEDED
-  const refetch = () => null;
-  const fleetUpdateState = useFleetUpdate(refetch);
   const catalogItemsState = useFleetCatalogItems([fleetName]);
 
   // CELIA-WIP: DISCUSS UX WITH PAOLA, page should be renderd saying we can't tell about the OS
@@ -154,25 +191,33 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
               </Text>
             ) : (
               <Text variant="body-small" color="secondary">
-                Start the OS update here.
+                Set a new catalog OS target here. No maintenance window is set -
+                fleet spec updates now and devices reconcile immediately as they
+                connect.
               </Text>
             )}
           </Flex>
           <Button
             variant="primary"
-            onClick={() =>
+            onClick={() => {
+              if (!catalogItem || !versionToUpdate) {
+                return;
+              }
               fleetUpdateState.openFleetUpdate(
                 fleet,
                 versionToUpdate,
-                osCatalogRef?.item || '',
-              )
-            }
+                getOsCatalogItemDisplayText(
+                  catalogItem,
+                  versionToUpdate.version,
+                ),
+              );
+            }}
           >
             Update OS target
           </Button>
         </div>
       )}
-      CELIA-WIP BLOCKER???
+      <FleetAlert fleet={fleet} />
       <div className={styles.fleetDetailsMainRow}>
         <Card>
           <CardHeader title="OS target" />
@@ -275,18 +320,14 @@ const FleetDetailsPageContent = ({ fleet }: { fleet: Fleet }) => {
 // CELIA-WIP CHECK PAGE STRUCTURE, TITLE FONT SIZE IS NOT CORRECT
 const FleetDetailsPage = () => {
   const { fleetName = '' } = useParams<{ fleetName: string }>();
-  const {
-    data: fleet,
-    isLoading,
-    isUpdating,
-    error,
-  } = useFleetDetails(fleetName);
+  const { data: fleet, isLoading, error, refetch } = useFleetDetails(fleetName);
+  const fleetUpdateState = useFleetUpdate(refetch);
 
   if (isLoading) {
     return <Progress />;
   }
 
-  const showLoading = (isLoading && !error) || isUpdating;
+  const showLoading = isLoading && !error;
   return (
     <AppLayout
       breadcrumbs={[
@@ -313,11 +354,13 @@ const FleetDetailsPage = () => {
           </Alert>
         )}
         {fleet && (
-          <Container>
-            <FleetDetailsPageContent fleet={fleet} />
-          </Container>
+          <FleetDetailsPageContent
+            fleet={fleet}
+            fleetUpdateState={fleetUpdateState}
+          />
         )}
       </Flex>
+      <FleetOsUpdateDialog fleetUpdateState={fleetUpdateState} />
     </AppLayout>
   );
 };

@@ -26,7 +26,9 @@ const MarkerStyles: Record<StatusLevel, string> = {
   info: styles.fleetStatusMarkerInfo,
 };
 
-const getFleetStatusItem = (fleetStatus?: ApiFleetStatus): FleetStatusItem => {
+export const getFleetStatusItem = (
+  fleetStatus?: ApiFleetStatus,
+): FleetStatusItem => {
   const fleetConditions = fleetStatus?.conditions ?? [];
 
   const validCondition = fleetConditions.find(
