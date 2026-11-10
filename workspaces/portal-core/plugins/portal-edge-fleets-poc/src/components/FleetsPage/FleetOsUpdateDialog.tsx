@@ -10,6 +10,13 @@ import {
 } from '@backstage/ui';
 
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
+import DescriptionList, {
+  DescriptionListItem,
+} from '../common/DescriptionList';
+
+import styles from './FleetOsUpdateDialog.module.css';
+
+// CELIA-WIP: check "Text as=strong" for correct style
 
 const FleetOsUpdateDialog = ({
   fleetUpdateState,
@@ -29,30 +36,65 @@ const FleetOsUpdateDialog = ({
 
   return (
     <Dialog
+      width="35rem"
       isOpen={Boolean(updateRequest)}
       isDismissable={!isUpdatingFleet}
       isKeyboardDismissDisabled={isUpdatingFleet}
       onOpenChange={handleFleetUpdateDialogOpen}
     >
       <DialogHeader>Update OS target</DialogHeader>
-      <DialogBody>
-        <Flex direction="column" gap="4">
-          <Text variant="body-medium">
-            Set <strong>{fleetName}</strong> to target{' '}
-            <strong>{targetOsLabel}</strong>.
+      <DialogBody className={styles.fleetOsUpdateDialogBody}>
+        <Flex direction="column" gap="2">
+          <Text>
+            Set <Text as="strong">{fleetName}</Text> to target{' '}
+            <Text as="strong">{targetOsLabel}</Text>.
           </Text>
-          {!updateSubmitted && (
-            <Alert
-              status="info"
-              title="Install timing"
-              description={
-                maintenanceWindow
-                  ? `Fleet spec updates now. Devices keep their current configuration until the next maintenance window (${maintenanceWindow}), when pending fleet changes can roll out. Managed in Red Hat Edge Manager.`
-                  : 'No maintenance window is set. Fleet spec updates now and devices reconcile the new OS target immediately as they connect.'
-              }
-            />
-          )}
+          <Text color="secondary">
+            {maintenanceWindow
+              ? 'The fleet OS target updates immediately. Devices download and install during the next maintenance window.'
+              : 'The fleet OS target updates immediately. Devices reconcile the new target as they connect — no maintenance window is set.'}
+          </Text>
         </Flex>
+
+        <section
+          className={styles.fleetOsUpdateDialogSection}
+          aria-label="OS target change"
+        >
+          <DescriptionList>
+            <DescriptionListItem label="Current target">
+              <Text weight="bold">current os</Text>
+            </DescriptionListItem>
+            <DescriptionListItem label="New target">
+              <Text weight="bold">{targetOsLabel}</Text>
+            </DescriptionListItem>
+          </DescriptionList>
+        </section>
+
+        <section
+          className={styles.fleetOsUpdateDialogSection}
+          aria-label="Maintenance window"
+        >
+          <Flex direction="column" gap="4">
+            <Flex direction="column" gap="1">
+              <Text id="update-os-window" weight="bold">
+                Maintenance window
+              </Text>
+              <Text variant="body-small" color="secondary">
+                Update scheduling and maintenance windows are set and managed in
+                Red Hat Edge Manager.
+              </Text>
+            </Flex>
+            <DescriptionList>
+              <DescriptionListItem label="Download">
+                <Text>10:00 AM</Text>
+              </DescriptionListItem>
+              <DescriptionListItem label="Install">
+                <Text>12:00 PM</Text>
+              </DescriptionListItem>
+            </DescriptionList>
+          </Flex>
+        </section>
+
         {updateError && (
           <Alert
             status="danger"
