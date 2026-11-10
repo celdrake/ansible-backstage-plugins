@@ -13,6 +13,7 @@ import { Progress } from '@backstage/core-components';
 import { RiExternalLinkLine } from '@remixicon/react';
 
 import {
+  CatalogItemRefSpec,
   DeviceOsSpec,
   DeviceUpdatePolicySpec,
   Fleet,
@@ -27,6 +28,7 @@ import {
   getOsCatalogItem,
   getOsCatalogItemDisplayText,
   getOsCatalogRefDisplayText,
+  getOsDisplayText,
 } from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
@@ -39,6 +41,12 @@ import AppHeader from '../Layout/AppHeader';
 import FleetStatus, { getFleetStatusItem } from '../FleetsPage/FleetStatus';
 import FleetOsUpdateDialog from '../FleetsPage/FleetOsUpdateDialog';
 import styles from './FleetDetailsPage.module.css';
+import {
+  getFleetOsMode,
+  getFleetOsSourceDetail,
+  getOsSourceLabel,
+  OsType,
+} from '../../utils/os';
 
 const FleetMaintenanceWindow = ({
   updatePolicy,
@@ -95,20 +103,24 @@ const FleetOsDetails = ({
   catalogItem: CatalogItem | undefined;
   versionToUpdate: CatalogItemVersion | undefined;
 }) => {
-  let osDisplayText = null;
-  let sourceLabel = null;
+  let currentVersion = null;
+  let nextVersion = null;
+  let osMode: OsType | null = null;
   if (osSpec?.catalogItemRef) {
-    osDisplayText =
-      catalogItem && versionToUpdate
-        ? getOsCatalogItemDisplayText(catalogItem, versionToUpdate?.version)
-        : getOsCatalogRefDisplayText(osSpec.catalogItemRef);
-    sourceLabel = 'Software Catalog';
+    osMode = 'catalog';
+    const { currentVersionText, nextVersionText } = getOsDisplayText(
+      osSpec.catalogItemRef,
+      catalogItem,
+      versionToUpdate,
+    );
+    currentVersion = currentVersionText;
+    nextVersion = nextVersionText;
   } else if (osSpec?.image) {
-    osDisplayText = osSpec.image;
-    sourceLabel = 'Custom image';
+    osMode = 'custom';
+    currentVersion = osSpec.image;
   } else {
-    osDisplayText = 'No OS image defined';
-    sourceLabel = 'Not set';
+    osMode = 'none';
+    currentVersion = 'No OS image defined';
   }
 
   return (
@@ -119,7 +131,7 @@ const FleetOsDetails = ({
           variant="title-small"
           style={{ fontSize: '1.5rem', fontWeight: '700' }}
         >
-          {osDisplayText}
+          {currentVersion}
         </Text>
 
         {versionToUpdate ? (
@@ -130,11 +142,11 @@ const FleetOsDetails = ({
       </div>
       <div className={styles.fleetOsExtraSection}>
         <SomeField label="Source">
-          <Text weight="bold">{sourceLabel}</Text>
+          <Text weight="bold">{getOsSourceLabel(osMode)}</Text>
         </SomeField>
-        {versionToUpdate && (
+        {nextVersion && (
           <SomeField label="Available">
-            <Text weight="bold">{versionToUpdate.version}</Text>
+            <Text weight="bold">{nextVersion}</Text>
           </SomeField>
         )}
         {!osSpec?.catalogItemRef && (
@@ -255,6 +267,8 @@ const FleetDetailsPageContent = ({
     updatePolicy?.updateSchedule || updatePolicy?.downloadSchedule,
   );
 
+  const osMode = getFleetOsMode(fleet);
+
   return (
     <Flex direction="column" gap="6">
       {hasUpdates && (
@@ -305,22 +319,13 @@ const FleetDetailsPageContent = ({
               catalogItem={catalogItem}
               versionToUpdate={versionToUpdate}
             />
-            {hasUpdates && (
-              <div className={styles.fleetDetailsMainRowItem}>
-                <Text variant="body-small" color="secondary">
-                  Update
-                </Text>
-                <UpdateAvailableBadge />
-                <div className={styles.fleetDetailsMainRowItem}>
-                  <Text variant="body-small" color="secondary">
-                    Available
-                  </Text>
-                </div>
-                <Text>
-                  {osCatalogRef?.item} {versionToUpdate?.version}
-                </Text>
-              </div>
-            )}
+            <Text
+              variant="body-small"
+              color="secondary"
+              className={styles.fleetOsSourceNote}
+            >
+              {getFleetOsSourceDetail(osMode)}
+            </Text>
           </CardBody>
         </Card>
 

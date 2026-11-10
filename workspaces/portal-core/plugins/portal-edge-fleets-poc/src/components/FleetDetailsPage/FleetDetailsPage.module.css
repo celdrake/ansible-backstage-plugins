@@ -84,7 +84,6 @@
 
 .fleetOsExtraField {
   display: contents;
-  border: 2px solid lime;
 }
 
 .fleetOsExtraFieldLabel {
@@ -93,4 +92,10 @@
 
 .fleetOsExtraFieldValue {
   min-width: 0;
+}
+
+.fleetOsSourceNote {
+  margin-top: auto;
+  padding-top: var(--bui-space-3);
+  border-top: 1px solid var(--bui-border);
 }

@@ -109,3 +109,33 @@ export const getOsCatalogRefDisplayText = (
   }
   return `${catalogItemRef.item} ${catalogItemRef.version}`;
 };
+
+export const getOsDisplayText = (
+  catalogItemRef: CatalogItemRefSpec,
+  catalogItem: CatalogItem | undefined,
+  versionToUpdate: CatalogItemVersion | undefined,
+) => {
+  let currentVersionText = null;
+  let nextVersionText = null;
+  if (catalogItem) {
+    currentVersionText = getOsCatalogItemDisplayText(
+      catalogItem,
+      catalogItemRef.version,
+    );
+    if (versionToUpdate) {
+      nextVersionText = getOsCatalogItemDisplayText(
+        catalogItem,
+        versionToUpdate.version,
+      );
+    }
+  } else {
+    currentVersionText = getOsCatalogRefDisplayText(catalogItemRef);
+    if (versionToUpdate) {
+      nextVersionText = `${catalogItemRef.item} ${versionToUpdate.version}`;
+    }
+  }
+  return {
+    currentVersionText,
+    nextVersionText,
+  };
+};
