@@ -47,6 +47,7 @@ import {
   getOsSourceLabel,
   OsType,
 } from '../../utils/os';
+import FleetUpdateStatusDetail from './FleetUpdateStatusDetail';
 
 const FleetMaintenanceWindow = ({
   updatePolicy,
@@ -193,16 +194,6 @@ const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
   ) : null;
 };
 
-const getFleetOsSource = (osSpec: DeviceOsSpec | undefined) => {
-  if (osSpec?.catalogItemRef) {
-    return 'Managed (updatable from Portal)';
-  }
-  if (osSpec?.image) {
-    return 'Custom image - manage updates in Edge Manager';
-  }
-  return 'No OS image - link in Edge Manager';
-};
-
 const FleetDetailsCardHeader = ({
   title,
   meta,
@@ -329,25 +320,25 @@ const FleetDetailsPageContent = ({
           </CardBody>
         </Card>
 
-        <Card>
-          <CardHeader title="Devices" />
-          <CardBody>
-            <Text color="secondary">DEVICES NOTE WHATEVER</Text>
-            <div className={styles.fleetDetailsMainRowItem}>
-              <Text variant="body-small" color="secondary">
-                Online
-              </Text>
-              <Text weight="bold">online of total</Text>
-            </div>
-            FLEET OS PROGRESS BAR WHATEVER
-            <Text variant="body-small" color="secondary">
-              Device lists and troubleshooting stay in Edge Manager.
-            </Text>
+        <Card className={styles.fleetDetailsCard}>
+          <CardHeader>
+            <FleetDetailsCardHeader title="Devices" />
+          </CardHeader>
+          <CardBody className={styles.fleetDetailsCardBody}>
+            <FleetUpdateStatusDetail fleet={fleet} />
           </CardBody>
         </Card>
-
-        <FleetMaintenanceWindow updatePolicy={updatePolicy} />
       </div>
+
+      <Card className={styles.fleetDetailsCard}>
+        <CardHeader>
+          <FleetDetailsCardHeader title="Maintenance window" />
+        </CardHeader>
+        <CardBody className={styles.fleetDetailsCardBody}>
+          <FleetMaintenanceWindow updatePolicy={updatePolicy} />
+        </CardBody>
+      </Card>
+
       <Card>
         <CardHeader title="Applications" />
         <CardBody>

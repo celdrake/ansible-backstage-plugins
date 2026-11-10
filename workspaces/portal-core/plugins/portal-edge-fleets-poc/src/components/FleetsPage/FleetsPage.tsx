@@ -111,7 +111,14 @@ const FleetsPageContent = ({
         label: 'Devices',
         cell: fleet => (
           <Cell>
-            <FleetDevicesBar fleet={fleet} />
+            <FleetDevicesBar
+              fleet={fleet}
+              header={
+                <Text variant="body-small" weight="bold">
+                  {fleet.status?.devicesSummary?.total || '0'} devices
+                </Text>
+              }
+            />
           </Cell>
         ),
       },

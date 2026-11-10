@@ -7,6 +7,8 @@ import {
 import { Text } from '@backstage/ui';
 import styles from './FleetDevicesBar.module.css';
 
+// CELIA-WIP: MOVE TO COMMON??
+
 const getDevicesUpdateBreakdown = (
   updateStatus: DevicesSummary['updateStatus'],
 ) => {
@@ -44,10 +46,20 @@ const getDevicesUpdateBreakdown = (
 };
 
 // CELIA-WIP: CONTENT NOT FITTING FOR 0 DEVICES TOTAL
-const FleetDevicesBar = ({ fleet }: { fleet: Fleet }) => {
+const FleetDevicesBar = ({
+  fleet,
+  header,
+}: {
+  fleet: Fleet;
+  header?: React.ReactNode;
+}) => {
   const summary = fleet.status?.devicesSummary;
   if (!summary) {
     return 'Device status breakdown not available';
+  }
+  const totalDevices = summary.total || 0;
+  if (totalDevices === 0) {
+    return 'No devices in this fleet';
   }
 
   const barSegments = getDevicesUpdateBreakdown(summary.updateStatus);
@@ -57,16 +69,15 @@ const FleetDevicesBar = ({ fleet }: { fleet: Fleet }) => {
     0;
   return (
     <div className={styles.fleetDevicesBarWrapper}>
-      <Text variant="body-small" weight="bold">
-        {summary.total} devices
-      </Text>
+      {header}
+
       <div className={styles.fleetDevicesBar}>
         {barSegments.map(({ status, label, count, className }) => (
           <div
             key={status}
             className={`${styles.fleetDevicesBarSegment} ${className}`}
             style={{
-              width: `${(count / (summary.total || 1)) * 100}%`,
+              width: `${(count / (totalDevices || 1)) * 100}%`,
             }}
             aria-label={`${count} ${label.toLowerCase()}`}
           />

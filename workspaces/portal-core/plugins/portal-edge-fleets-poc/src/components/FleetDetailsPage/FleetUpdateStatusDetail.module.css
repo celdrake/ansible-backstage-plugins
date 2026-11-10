@@ -1,0 +1,20 @@
+.statPair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--bui-space-3);
+}
+
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--bui-space-3);
+  border-radius: var(--bui-radius-2);
+  background-color: var(--bui-bg-neutral-2);
+}
+
+.statValue {
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
