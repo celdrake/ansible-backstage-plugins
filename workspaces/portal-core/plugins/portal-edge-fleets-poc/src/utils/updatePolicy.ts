@@ -86,11 +86,6 @@ const getScheduleTimeZone = (schedule: UpdateSchedule): string => {
   return schedule.timeZone;
 };
 
-const rawCronExpression = (schedule: UpdateSchedule): string => {
-  const timeZone = getScheduleTimeZone(schedule);
-  return `Cron ${schedule.at}; window ${schedule.startGraceDuration} (${timeZone})`;
-};
-
 type MaintenanceWindow = {
   startMinutes: number;
   endMinutes: number;
@@ -134,9 +129,24 @@ const scheduleToWindow = (
   };
 };
 
-export const formatScheduleInfo = (
+export const hasSameDownloadAndInstallSchedules = (
+  updatePolicy: DeviceUpdatePolicySpec,
+): boolean => {
+  const downloadSchedule = updatePolicy.downloadSchedule;
+  const installSchedule = updatePolicy.updateSchedule;
+  if (!downloadSchedule || !installSchedule) {
+    return false;
+  }
+  return (
+    downloadSchedule.at === installSchedule.at &&
+    downloadSchedule.startGraceDuration ===
+      installSchedule.startGraceDuration &&
+    downloadSchedule.timeZone === installSchedule.timeZone
+  );
+};
+
+export const formatUpdateSchedule = (
   schedule: UpdateSchedule,
-  mode: 'update' | 'download',
 ): string | null => {
   const timeZone = getScheduleTimeZone(schedule);
   const cronExpressionParts = scheduleToWindow(schedule);
@@ -150,46 +160,7 @@ export const formatScheduleInfo = (
       ? 'Daily'
       : `Weekly on ${daysOfWeek.map(day => WEEKDAYS[day]).join(', ')}`;
 
-  return `${
-    mode === 'update' ? 'Update' : 'Download'
-  }  ${scheduleDays} from ${formatTime(startMinutes)} to ${formatTime(
+  return `${scheduleDays} from ${formatTime(startMinutes)} to ${formatTime(
     endMinutes,
-  )} (${timeZone}); start grace ${schedule.startGraceDuration}`;
-};
-
-// CELIA-WIP: test all the cases
-export const formatMaintenanceWindow = (
-  updatePolicy: DeviceUpdatePolicySpec,
-): string | null => {
-  if (!updatePolicy.updateSchedule && !updatePolicy.downloadSchedule) {
-    return null;
-  }
-
-  const parts = [];
-  if (updatePolicy.downloadSchedule) {
-    const downloadScheduleInfo = formatScheduleInfo(
-      updatePolicy.downloadSchedule,
-      'download',
-    );
-    if (downloadScheduleInfo) {
-      parts.push(downloadScheduleInfo);
-    } else {
-      parts.push(
-        `Download schedule (cron): ${updatePolicy.downloadSchedule?.at}`,
-      );
-    }
-  }
-  if (updatePolicy.updateSchedule) {
-    const updateScheduleInfo = formatScheduleInfo(
-      updatePolicy.updateSchedule,
-      'update',
-    );
-    if (updateScheduleInfo) {
-      parts.push(updateScheduleInfo);
-    } else {
-      parts.push(`Update schedule (cron): ${updatePolicy.updateSchedule?.at}`);
-    }
-  }
-
-  return parts.join('; ');
+  )} (${timeZone}). Start grace: ${schedule.startGraceDuration}`;
 };

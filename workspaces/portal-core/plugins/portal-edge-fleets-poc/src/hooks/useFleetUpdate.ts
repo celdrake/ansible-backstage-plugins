@@ -1,15 +1,15 @@
 import { useCallback, useState } from 'react';
 import type { Fleet } from '@ansible/portal-edge-fleets-poc-common';
-import type { CatalogItemVersion } from '@ansible/portal-edge-fleets-poc-common/alpha';
-import { formatMaintenanceWindow } from '../utils/time';
+import type {
+  CatalogItem,
+  CatalogItemVersion,
+} from '@ansible/portal-edge-fleets-poc-common/alpha';
 import useFlightCtlApiFetch from './useFlightCtlApiFetch';
 
 type FleetUpdateRequest = {
-  fleetName: string;
-  currentVersion: string;
+  fleet: Fleet;
+  osCatalogItem: CatalogItem;
   targetVersion: CatalogItemVersion;
-  targetOsLabel: string;
-  maintenanceWindow: string | undefined;
 };
 
 export type UseFleetUpdateState = {
@@ -37,19 +37,13 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
   const openFleetUpdate = useCallback(
     (
       fleet: Fleet,
+      osCatalogItem: CatalogItem,
       targetVersion: CatalogItemVersion,
-      targetOsLabel: string,
     ) => {
-      const updatePolicy = fleet.spec.template.spec.updatePolicy;
       setUpdateRequest({
-        fleetName: fleet.metadata.name as string,
-        currentVersion:
-          fleet.spec.template.spec.os?.catalogItemRef?.version || '',
+        fleet,
+        osCatalogItem,
         targetVersion,
-        targetOsLabel,
-        maintenanceWindow: updatePolicy
-          ? formatMaintenanceWindow(updatePolicy)
-          : undefined,
       });
       setUpdateError(undefined);
       setUpdateSubmitted(false);
@@ -69,8 +63,9 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
   const confirmFleetUpdate = useCallback(async () => {
     if (!updateRequest) return;
 
-    const fleetName = updateRequest.fleetName;
-    const currentVersion = updateRequest.currentVersion;
+    const fleetName = updateRequest.fleet.metadata.name;
+    const currentVersion =
+      updateRequest.fleet.spec.template.spec.os?.catalogItemRef?.version;
     if (!fleetName || !currentVersion) {
       setUpdateError(
         'The fleet operating system catalog reference is unavailable.',

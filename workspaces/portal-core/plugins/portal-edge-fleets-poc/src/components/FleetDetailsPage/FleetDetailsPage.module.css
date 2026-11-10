@@ -29,14 +29,6 @@
   background-color: var(--bui-bg-surface-1);
 }
 
-/* CELIA-WIP: CAN IT BE DONE WITH FLEX ? OR RENAME PROPERLY */
-.metaRow {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: var(--bui-space-3);
-}
-
 .rhemBanner {
   display: flex;
   flex-wrap: wrap;
@@ -47,4 +39,58 @@
   border: 1px solid var(--bui-border);
   border-radius: var(--bui-radius-2);
   background-color: var(--bui-bg-surface-1);
+}
+
+.fleetDetailsCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fleetDetailsCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-4);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fleetDetailsCardTitle {
+  width: 100%;
+}
+
+.fleetDetailsCardTitleMeta {
+  flex-shrink: 0;
+}
+
+.fleetTargetOs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--bui-space-2);
+  padding-bottom: var(--bui-space-3);
+  border-bottom: 1px solid var(--bui-border);
+}
+
+/* CELIA-WIP: Named "mainFields" in the design. What does it mean??? */
+.fleetOsExtraSection {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  column-gap: var(--bui-space-4);
+  row-gap: var(--bui-space-3);
+  align-items: center;
+}
+
+.fleetOsExtraField {
+  display: contents;
+  border: 2px solid lime;
+}
+
+.fleetOsExtraFieldLabel {
+  margin: 0;
+}
+
+.fleetOsExtraFieldValue {
+  min-width: 0;
 }

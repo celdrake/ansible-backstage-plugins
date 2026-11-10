@@ -1,27 +1,29 @@
 import { Link, Text } from '@backstage/ui';
 import { RiArrowRightSLine } from '@remixicon/react';
 
+import styles from './AppBreadcrumbs.module.css';
+
 export type BreadcrumbItem = {
   label: string;
   href?: string;
 };
 
 // CELIA-WIP: styles
+/*
 const styles = {
-  breadcrumbs: 'fake-breadcrumbs',
-  breadcrumbList: 'fake-breadcrumb-list',
   breadcrumbItem: 'fake-breadcrumb-item',
   breadcrumbSep: 'fake-breadcrumb-sep',
   breadcrumbCurrent: 'fake-breadcrumb-current',
   breadcrumbLink: 'fake-breadcrumb-link',
 };
+*/
 const AppBreadcrumbs = ({ items }: { items: BreadcrumbItem[] | undefined }) => {
   if (!items || items.length === 0) {
     return null;
   }
   return (
-    <nav aria-label="Breadcrumb" className={styles.breadcrumbs}>
-      <ol className={styles.breadcrumbList}>
+    <nav aria-label="Breadcrumb" className={styles.breadcrumbsWrapper}>
+      <ol className={styles.breadcrumbsList}>
         {items.map((item, index) => {
           const isCurrent = index === items.length - 1 || !item.href;
           return (
@@ -31,7 +33,7 @@ const AppBreadcrumbs = ({ items }: { items: BreadcrumbItem[] | undefined }) => {
             >
               {index > 0 ? (
                 <RiArrowRightSLine
-                  className={styles.breadcrumbSep}
+                  className={styles.breadcrumbStep}
                   size={14}
                   aria-hidden
                 />

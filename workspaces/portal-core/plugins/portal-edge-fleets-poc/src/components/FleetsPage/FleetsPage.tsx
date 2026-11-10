@@ -12,7 +12,10 @@ import {
   Text,
 } from '@backstage/ui';
 
-import type { CatalogItemVersion } from '@ansible/portal-edge-fleets-poc-common/alpha';
+import type {
+  CatalogItem,
+  CatalogItemVersion,
+} from '@ansible/portal-edge-fleets-poc-common/alpha';
 import { type Fleet } from '@ansible/portal-edge-fleets-poc-common';
 import useFleetList, {
   type EdgeFleet,
@@ -55,8 +58,8 @@ const FleetsPageContent = ({
   fleetListState: FleetListState;
   onUpdateFleet: (
     fleet: Fleet,
+    osCatalogItem: CatalogItem,
     targetVersion: CatalogItemVersion,
-    targetOsLabel: string,
   ) => void;
 }) => {
   const {

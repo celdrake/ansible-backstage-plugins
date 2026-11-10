@@ -134,8 +134,8 @@ export const FleetActions = ({
   catalogItemState: FleetCatalogItemsState;
   onUpdate: (
     fleet: Fleet,
+    osCatalogItem: CatalogItem,
     targetVersion: CatalogItemVersion,
-    targetOsLabel: string,
   ) => void;
 }) => {
   const handleOsUpdate = React.useCallback(
@@ -144,11 +144,7 @@ export const FleetActions = ({
       versionToUpdate: CatalogItemVersion | undefined,
     ) => {
       if (catalogItem && versionToUpdate) {
-        onUpdate(
-          fleet,
-          versionToUpdate,
-          getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version),
-        );
+        onUpdate(fleet, catalogItem, versionToUpdate);
       }
     },
     [fleet, onUpdate],

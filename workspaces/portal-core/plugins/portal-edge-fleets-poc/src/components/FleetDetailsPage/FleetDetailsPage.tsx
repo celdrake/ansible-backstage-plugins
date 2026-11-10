@@ -31,8 +31,9 @@ import {
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
-import { formatMaintenanceWindow } from '../../utils/time';
+import { formatUpdateSchedule } from '../../utils/updatePolicy';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
+import CurrentStatusBadge from '../common/CurrentStatusBadge';
 import AppLayout from '../Layout/AppLayout';
 import AppHeader from '../Layout/AppHeader';
 import FleetStatus, { getFleetStatusItem } from '../FleetsPage/FleetStatus';
@@ -51,7 +52,7 @@ const FleetMaintenanceWindow = ({
     return null;
   }
 
-  // CELIA-WIP: CHECK WITH UX DESIGN
+  // CELIA-WIP: CHECK WITH NEW DESIGN
   return (
     <Card>
       <CardHeader
@@ -60,9 +61,28 @@ const FleetMaintenanceWindow = ({
         })"`}
       />
       <CardBody>
-        <Text>{formatMaintenanceWindow(updatePolicy)}</Text>
+        <Text>{formatUpdateSchedule(schedule)}</Text>
       </CardBody>
     </Card>
+  );
+};
+
+// CELIA-WIP: what's the purpose of this component and does it name make sense?
+const SomeField = ({
+  label,
+  children,
+}: React.PropsWithChildren<{ label: string }>) => {
+  return (
+    <div className={styles.fleetOsExtraField}>
+      <Text
+        variant="body-small"
+        color="secondary"
+        className={styles.fleetOsExtraFieldLabel}
+      >
+        {label}
+      </Text>
+      <div className={styles.fleetOsExtraFieldValue}>{children}</div>
+    </div>
   );
 };
 
@@ -75,28 +95,59 @@ const FleetOsDetails = ({
   catalogItem: CatalogItem | undefined;
   versionToUpdate: CatalogItemVersion | undefined;
 }) => {
-  const osTitle = osSpec?.catalogItemRef ? 'Target' : 'Image';
-
-  let osContent = null;
+  let osDisplayText = null;
+  let sourceLabel = null;
   if (osSpec?.catalogItemRef) {
-    const osDisplayText =
+    osDisplayText =
       catalogItem && versionToUpdate
         ? getOsCatalogItemDisplayText(catalogItem, versionToUpdate?.version)
         : getOsCatalogRefDisplayText(osSpec.catalogItemRef);
-    osContent = <Text weight="bold">{osDisplayText}</Text>;
+    sourceLabel = 'Software Catalog';
   } else if (osSpec?.image) {
-    osContent = <Text weight="bold">{`Custom image · ${osSpec.image}`}</Text>;
+    osDisplayText = osSpec.image;
+    sourceLabel = 'Custom image';
   } else {
-    osContent = <Text>Not defined</Text>;
+    osDisplayText = 'No OS image defined';
+    sourceLabel = 'Not set';
   }
 
   return (
-    <div className={styles.metaRow}>
-      <Text variant="body-small" color="secondary">
-        {osTitle}
-      </Text>
-      <Text weight="bold">{osContent}</Text>
-    </div>
+    <>
+      <div className={styles.fleetTargetOs}>
+        <Text
+          as="strong"
+          variant="title-small"
+          style={{ fontSize: '1.5rem', fontWeight: '700' }}
+        >
+          {osDisplayText}
+        </Text>
+
+        {versionToUpdate ? (
+          <UpdateAvailableBadge />
+        ) : osSpec?.catalogItemRef ? (
+          <CurrentStatusBadge text="Current" />
+        ) : null}
+      </div>
+      <div className={styles.fleetOsExtraSection}>
+        <SomeField label="Source">
+          <Text weight="bold">{sourceLabel}</Text>
+        </SomeField>
+        {versionToUpdate && (
+          <SomeField label="Available">
+            <Text weight="bold">{versionToUpdate.version}</Text>
+          </SomeField>
+        )}
+        {!osSpec?.catalogItemRef && (
+          <SomeField label="Updates">
+            <Text color="secondary">
+              {osSpec?.image
+                ? 'Custom image - manage updates in Edge Manager'
+                : 'No OS image defined'}
+            </Text>
+          </SomeField>
+        )}
+      </div>
+    </>
   );
 };
 
@@ -108,7 +159,7 @@ const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
   if (fleetStatusItem.id === 'Invalid') {
     title = 'Fleet invalid';
     description =
-      'Fleet specification problem - OS updates are unavailable. Check with an administrator or open Edge Manager.';
+      'Fleet specification problem - OS updates are unavailable. Check with an administrator or open Edge Manager';
   } else if (fleetStatusItem.id === 'SyncPending') {
     title = 'Sync pending';
     description =
@@ -118,19 +169,16 @@ const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
     if (osSpec?.image) {
       title = 'Custom image · Manage updates in Edge Manager';
       description =
-        'Device mix relative to the fleet OS image. Manage image changes in Edge Manager.';
+        'Shows how many devices match the fleet OS image. Manage image changes in Edge Manager.';
     } else if (!osSpec?.catalogItemRef) {
       title = 'No OS image defined';
-      description =
-        'Assign an OS image in Edge Manager before Portal can start updates..';
+      description = 'OS image can be assigned in Edge Manager.';
     }
   }
 
-  if (!(title && description)) {
-    return null;
-  }
-
-  return <Alert status="warning" title={title} description={description} />;
+  return title ? (
+    <Alert status="warning" title={title} description={description} />
+  ) : null;
 };
 
 const getFleetOsSource = (osSpec: DeviceOsSpec | undefined) => {
@@ -141,6 +189,34 @@ const getFleetOsSource = (osSpec: DeviceOsSpec | undefined) => {
     return 'Custom image - manage updates in Edge Manager';
   }
   return 'No OS image - link in Edge Manager';
+};
+
+const FleetDetailsCardHeader = ({
+  title,
+  meta,
+  description,
+}: {
+  title: string;
+  meta?: React.ReactNode;
+  description?: React.ReactNode;
+}) => {
+  return (
+    <CardHeader>
+      <Flex direction="column" gap="1" className={styles.fleetDetailsCardTitle}>
+        <Flex justify="between" align="center" gap="3">
+          <Text weight="bold">{title}</Text>
+          {meta && (
+            <div className={styles.fleetDetailsCardTitleMeta}>{meta}</div>
+          )}
+        </Flex>
+        {description && (
+          <Text variant="body-small" color="secondary">
+            {description}
+          </Text>
+        )}
+      </Flex>
+    </CardHeader>
+  );
 };
 
 const FleetDetailsPageContent = ({
@@ -172,6 +248,7 @@ const FleetDetailsPageContent = ({
     ? getOsCatalogItem(osCatalogRef, catalogItemsState.catalogItemsList.items)
     : { catalogItem: undefined, versionToUpdate: undefined };
 
+  // CELIA-WIP: Design wants to block updates if the fleet is invalid
   const hasUpdates = versionToUpdate !== undefined;
   const updatePolicy = fleet.spec.template.spec.updatePolicy;
   const hasUpdatePolicy = Boolean(
@@ -186,14 +263,15 @@ const FleetDetailsPageContent = ({
             <Text weight="bold">OS update ready</Text>
             {hasUpdatePolicy ? (
               <Text variant="body-small" color="secondary">
-                Start the OS update here. Install timing follows this
-                fleet&apos;s maintenance window in Edge Manager.
+                Set a new catalog OS target here. Fleet updates now. Pending OS
+                and other fleet changes apply on devices during the next
+                maintenance window - managed in Edge Manager.
               </Text>
             ) : (
               <Text variant="body-small" color="secondary">
-                Set a new catalog OS target here. No maintenance window is set -
-                fleet spec updates now and devices reconcile immediately as they
-                connect.
+                Set a new catalog OS target here. No maintenance window is set.
+                Fleet updates now and devices reconcile the new OS target as
+                they connect.
               </Text>
             )}
           </Flex>
@@ -219,9 +297,9 @@ const FleetDetailsPageContent = ({
       )}
       <FleetAlert fleet={fleet} />
       <div className={styles.fleetDetailsMainRow}>
-        <Card>
-          <CardHeader title="OS target" />
-          <CardBody>
+        <Card className={styles.fleetDetailsCard}>
+          <FleetDetailsCardHeader title="OS target" />
+          <CardBody className={styles.fleetDetailsCardBody}>
             <FleetOsDetails
               osSpec={osSpec}
               catalogItem={catalogItem}
@@ -243,12 +321,6 @@ const FleetDetailsPageContent = ({
                 </Text>
               </div>
             )}
-            <div className={styles.fleetDetailsMainRowItem}>
-              <Text variant="body-small" color="secondary">
-                Source
-              </Text>
-              <Text>{getFleetOsSource(osSpec)}</Text>
-            </div>
           </CardBody>
         </Card>
 

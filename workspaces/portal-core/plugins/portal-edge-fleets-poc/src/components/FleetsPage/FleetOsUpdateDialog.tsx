@@ -9,7 +9,16 @@ import {
   Text,
 } from '@backstage/ui';
 
+import {
+  DeviceUpdatePolicySpec,
+  UpdateSchedule,
+} from '@ansible/portal-edge-fleets-poc-common';
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
+import { getOsCatalogItemDisplayText } from '../../utils/catalogItems';
+import {
+  formatUpdateSchedule,
+  hasSameDownloadAndInstallSchedules,
+} from '../../utils/updatePolicy';
 import DescriptionList, {
   DescriptionListItem,
 } from '../common/DescriptionList';
@@ -17,6 +26,63 @@ import DescriptionList, {
 import styles from './FleetOsUpdateDialog.module.css';
 
 // CELIA-WIP: check "Text as=strong" for correct style
+
+const UpdateScheduleDetails = ({
+  title,
+  scheduleText,
+  atExpression,
+}: {
+  title: string;
+  scheduleText: string | null;
+  atExpression: string;
+}) => {
+  if (!scheduleText) {
+    return (
+      <>
+        <DescriptionListItem label={`${title}`}>
+          <Text>{`Cron schedule: ${atExpression}`}</Text>
+        </DescriptionListItem>
+        <DescriptionListItem label="Note">
+          <Text>Complex schedules are managed in Edge Manager.</Text>
+        </DescriptionListItem>
+      </>
+    );
+  }
+
+  return (
+    <DescriptionListItem label={title}>
+      <Text>{scheduleText}</Text>
+    </DescriptionListItem>
+  );
+};
+
+const FleetUpdatePolicyDetails = ({
+  updatePolicy,
+}: {
+  updatePolicy: DeviceUpdatePolicySpec;
+}) => {
+  const hasSamePolicies = hasSameDownloadAndInstallSchedules(updatePolicy);
+  const showInstallSchedule = updatePolicy?.updateSchedule && !hasSamePolicies;
+
+  return (
+    <DescriptionList>
+      {updatePolicy?.downloadSchedule && (
+        <UpdateScheduleDetails
+          title={hasSamePolicies ? 'Download and install' : 'Download'}
+          scheduleText={formatUpdateSchedule(updatePolicy.downloadSchedule)}
+          atExpression={updatePolicy.downloadSchedule.at}
+        />
+      )}
+      {showInstallSchedule && updatePolicy?.updateSchedule && (
+        <UpdateScheduleDetails
+          title="Install"
+          scheduleText={formatUpdateSchedule(updatePolicy.updateSchedule)}
+          atExpression={updatePolicy.updateSchedule.at}
+        />
+      )}
+    </DescriptionList>
+  );
+};
 
 const FleetOsUpdateDialog = ({
   fleetUpdateState,
@@ -32,17 +98,34 @@ const FleetOsUpdateDialog = ({
     confirmFleetUpdate,
     handleFleetUpdateDialogOpen,
   } = fleetUpdateState;
-  const { fleetName, targetOsLabel, maintenanceWindow } = updateRequest ?? {};
+
+  if (!updateRequest) {
+    return null;
+  }
+
+  const { fleet, osCatalogItem, targetVersion } = updateRequest;
+  const fleetName = fleet?.metadata.name as string;
+  const updatePolicy = fleet?.spec.template.spec.updatePolicy;
+  const hasUpdatePolicy =
+    updatePolicy &&
+    Boolean(updatePolicy?.downloadSchedule || updatePolicy?.updateSchedule);
+
+  const targetOsLabel = getOsCatalogItemDisplayText(
+    osCatalogItem,
+    targetVersion.version,
+  );
 
   return (
     <Dialog
       width="35rem"
-      isOpen={Boolean(updateRequest)}
+      isOpen
       isDismissable={!isUpdatingFleet}
       isKeyboardDismissDisabled={isUpdatingFleet}
       onOpenChange={handleFleetUpdateDialogOpen}
     >
-      <DialogHeader>Update OS target</DialogHeader>
+      <DialogHeader className={styles.fleetOsUpdateDialogHeader}>
+        Update OS target
+      </DialogHeader>
       <DialogBody className={styles.fleetOsUpdateDialogBody}>
         <Flex direction="column" gap="2">
           <Text>
@@ -50,9 +133,9 @@ const FleetOsUpdateDialog = ({
             <Text as="strong">{targetOsLabel}</Text>.
           </Text>
           <Text color="secondary">
-            {maintenanceWindow
+            {hasUpdatePolicy
               ? 'The fleet OS target updates immediately. Devices download and install during the next maintenance window.'
-              : 'The fleet OS target updates immediately. Devices reconcile the new target as they connect — no maintenance window is set.'}
+              : 'The fleet OS target updates immediately. Devices reconcile the new target as they connect - no maintenance window is set.'}
           </Text>
         </Flex>
 
@@ -62,7 +145,12 @@ const FleetOsUpdateDialog = ({
         >
           <DescriptionList>
             <DescriptionListItem label="Current target">
-              <Text weight="bold">current os</Text>
+              <Text weight="bold">
+                {getOsCatalogItemDisplayText(
+                  osCatalogItem,
+                  fleet.spec.template.spec.os?.catalogItemRef?.version || '',
+                )}
+              </Text>
             </DescriptionListItem>
             <DescriptionListItem label="New target">
               <Text weight="bold">{targetOsLabel}</Text>
@@ -70,36 +158,37 @@ const FleetOsUpdateDialog = ({
           </DescriptionList>
         </section>
 
-        <section
-          className={styles.fleetOsUpdateDialogSection}
-          aria-label="Maintenance window"
-        >
-          <Flex direction="column" gap="4">
-            <Flex direction="column" gap="1">
-              <Text id="update-os-window" weight="bold">
-                Maintenance window
-              </Text>
-              <Text variant="body-small" color="secondary">
-                Update scheduling and maintenance windows are set and managed in
-                Red Hat Edge Manager.
-              </Text>
+        {hasUpdatePolicy && (
+          <section
+            className={styles.fleetOsUpdateDialogSection}
+            aria-label="Maintenance window"
+          >
+            <Flex direction="column" gap="4">
+              <Flex direction="column" gap="1">
+                <Text id="update-os-window" weight="bold">
+                  Maintenance window
+                </Text>
+                <Text variant="body-small" color="secondary">
+                  Update scheduling and maintenance windows are set and managed
+                  in Red Hat Edge Manager.
+                </Text>
+              </Flex>
+              <FleetUpdatePolicyDetails updatePolicy={updatePolicy} />
             </Flex>
-            <DescriptionList>
-              <DescriptionListItem label="Download">
-                <Text>10:00 AM</Text>
-              </DescriptionListItem>
-              <DescriptionListItem label="Install">
-                <Text>12:00 PM</Text>
-              </DescriptionListItem>
-            </DescriptionList>
-          </Flex>
-        </section>
+          </section>
+        )}
 
         {updateError && (
           <Alert
             status="danger"
-            title="Unable to update fleet"
-            description={updateError}
+            title="OS target could not be updated"
+            description={
+              <div>
+                The OS target for this fleet could not be updated. See the
+                details below and try again.
+                <details>{updateError}</details>
+              </div>
+            }
             icon
             mt="3"
           />
