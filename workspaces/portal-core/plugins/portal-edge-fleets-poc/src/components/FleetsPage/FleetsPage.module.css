@@ -14,9 +14,19 @@
   text-align: center;
 }
 
-.fleetListActionsMenu {
+.fleetListActionsMenuWrapper {
   flex-shrink: 0;
   margin-left: auto;
+}
+
+/* Make the items not wrap; the menu expands to the width of the items. */
+.fleetListActionsMenu {
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+}
+
+.fleetActionsMenuItem {
+  white-space: nowrap;
 }
 
 .osPrimaryText {

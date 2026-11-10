@@ -10,13 +10,6 @@ export const getOsCatalogItem = (
   osItemRef: CatalogItemRefSpec,
   catalogItems: CatalogItem[],
 ) => {
-  if (!osItemRef) {
-    return {
-      catalogItem: undefined,
-      versionToUpdate: undefined,
-    };
-  }
-
   const catalogItem = catalogItems.find(
     item =>
       item.metadata.name === osItemRef.item &&

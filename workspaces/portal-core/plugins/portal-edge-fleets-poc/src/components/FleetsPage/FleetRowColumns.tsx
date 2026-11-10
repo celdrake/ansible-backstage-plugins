@@ -26,7 +26,6 @@ import {
 } from '../../utils/catalogItems';
 import { getFleetDetailsPath } from '../../utils/routes';
 import { FleetCatalogItemsState } from './types';
-import { formatMaintenanceWindow } from '../../utils/time';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 import styles from './FleetsPage.module.css';
 
@@ -140,41 +139,55 @@ export const FleetActions = ({
   ) => void;
 }) => {
   const handleOsUpdate = React.useCallback(
-    (versionToUpdate: CatalogItemVersion, catalogItem: CatalogItem) => {
-      onUpdate(
-        fleet,
-        versionToUpdate,
-        getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version),
-      );
+    (
+      catalogItem: CatalogItem | undefined,
+      versionToUpdate: CatalogItemVersion | undefined,
+    ) => {
+      if (catalogItem && versionToUpdate) {
+        onUpdate(
+          fleet,
+          versionToUpdate,
+          getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version),
+        );
+      }
     },
     [fleet, onUpdate],
   );
 
-  const osSpec = fleet.spec.template.spec.os;
-  if (!osSpec?.catalogItemRef || catalogItemState.status === 'error') {
+  if (catalogItemState.status === 'error') {
     return null;
   }
   if (catalogItemState.status === 'loading') {
     return <StatusPending>Loading</StatusPending>;
   }
 
-  const { catalogItem, versionToUpdate } = getOsCatalogItem(
-    osSpec.catalogItemRef,
-    catalogItemState.catalogItemsList.items,
-  );
+  const catalogItemRef = fleet.spec.template.spec.os?.catalogItemRef;
+  const catalogItemResult = catalogItemRef
+    ? getOsCatalogItem(catalogItemRef, catalogItemState.catalogItemsList.items)
+    : { catalogItem: undefined, versionToUpdate: undefined };
+
+  const canUpdate =
+    catalogItemResult.catalogItem !== undefined &&
+    catalogItemResult.versionToUpdate !== undefined;
 
   const hasRhemLink = shouldLinkToEdgeManager(fleet);
-
   return (
     <Flex gap="2">
-      {versionToUpdate && catalogItem && (
+      {canUpdate && (
         <Flex direction="column" grow={1}>
-          <Button onClick={() => handleOsUpdate(versionToUpdate, catalogItem)}>
+          <Button
+            onClick={() =>
+              handleOsUpdate(
+                catalogItemResult.catalogItem,
+                catalogItemResult.versionToUpdate,
+              )
+            }
+          >
             Update OS target
           </Button>
         </Flex>
       )}
-      <div className={styles.fleetListActionsMenu}>
+      <div className={styles.fleetListActionsMenuWrapper}>
         <MenuTrigger>
           <ButtonIcon
             variant="secondary"
@@ -182,13 +195,18 @@ export const FleetActions = ({
             aria-label={`Actions for ${fleet.metadata.name}`}
             icon={<RiMore2Line aria-hidden size={20} />}
           />
-          <Menu>
+          <Menu className={styles.fleetListActionsMenu}>
             <MenuItem href={getFleetDetailsPath(fleet.metadata.name as string)}>
               Open fleet
             </MenuItem>
-            {versionToUpdate && catalogItem && (
+            {canUpdate && (
               <MenuItem
-                onAction={() => handleOsUpdate(versionToUpdate, catalogItem)}
+                onAction={() =>
+                  handleOsUpdate(
+                    catalogItemResult.catalogItem,
+                    catalogItemResult.versionToUpdate,
+                  )
+                }
               >
                 Update OS target
               </MenuItem>
@@ -198,6 +216,7 @@ export const FleetActions = ({
                 href={getEdgeManagerLink(fleet)}
                 target="_blank"
                 rel="noopener noreferrer"
+                className={styles.fleetActionsMenuItem}
               >
                 Open Edge Manager
               </MenuItem>
