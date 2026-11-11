@@ -14,13 +14,13 @@ type FleetUpdateRequest = {
 
 export type UseFleetUpdateState = {
   updateRequest: FleetUpdateRequest | undefined;
-  isUpdatingFleet: boolean;
+  isSubmitting: boolean;
+  isSubmitSuccess: boolean;
   updateError: string | undefined;
-  updateSubmitted: boolean;
   openFleetUpdate: (
     fleet: Fleet,
+    osCatalogItem: CatalogItem,
     targetVersion: CatalogItemVersion,
-    targetOsLabel: string,
   ) => void;
   closeFleetUpdate: VoidFunction;
   confirmFleetUpdate: VoidFunction;
@@ -31,8 +31,8 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
   const flightctlFetch = useFlightCtlApiFetch();
   const [updateRequest, setUpdateRequest] = useState<FleetUpdateRequest>();
   const [updateError, setUpdateError] = useState<string>();
-  const [updateSubmitted, setUpdateSubmitted] = useState(false);
-  const [isUpdatingFleet, setIsUpdatingFleet] = useState(false);
+  const [isSubmitSuccess, setisSubmitSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const openFleetUpdate = useCallback(
     (
@@ -46,19 +46,19 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
         targetVersion,
       });
       setUpdateError(undefined);
-      setUpdateSubmitted(false);
+      setisSubmitSuccess(false);
     },
     [],
   );
 
   const closeFleetUpdate = useCallback(() => {
-    if (isUpdatingFleet) {
+    if (isSubmitting) {
       return;
     }
     setUpdateRequest(undefined);
     setUpdateError(undefined);
-    setUpdateSubmitted(false);
-  }, [isUpdatingFleet]);
+    setisSubmitSuccess(false);
+  }, [isSubmitting]);
 
   const confirmFleetUpdate = useCallback(async () => {
     if (!updateRequest) return;
@@ -73,7 +73,7 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
       return;
     }
 
-    setIsUpdatingFleet(true);
+    setIsSubmitting(true);
     setUpdateError(undefined);
     try {
       await flightctlFetch<void>(
@@ -92,13 +92,13 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
         },
       );
       refetchFleets();
-      setUpdateSubmitted(true);
+      setisSubmitSuccess(true);
     } catch (error) {
       setUpdateError(
         error instanceof Error ? error.message : 'Unable to update fleet.',
       );
     } finally {
-      setIsUpdatingFleet(false);
+      setIsSubmitting(false);
     }
   }, [updateRequest, flightctlFetch, refetchFleets]);
 
@@ -113,9 +113,9 @@ const useFleetUpdate = (refetchFleets: VoidFunction): UseFleetUpdateState => {
 
   return {
     updateRequest,
-    isUpdatingFleet,
+    isSubmitting,
     updateError,
-    updateSubmitted,
+    isSubmitSuccess,
     openFleetUpdate,
     closeFleetUpdate,
     confirmFleetUpdate,

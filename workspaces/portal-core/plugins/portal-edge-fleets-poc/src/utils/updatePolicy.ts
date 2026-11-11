@@ -145,22 +145,29 @@ export const hasSameDownloadAndInstallSchedules = (
   );
 };
 
-export const formatUpdateSchedule = (
+type ScheduleParts = {
+  frequency: 'Daily' | 'Weekly';
+  daysOfWeek: string[];
+  time: string;
+  isLocalTimeZone: boolean;
+};
+
+export const extractUpdateScheduleParts = (
   schedule: UpdateSchedule,
-): string | null => {
-  const timeZone = getScheduleTimeZone(schedule);
+): ScheduleParts | null => {
   const cronExpressionParts = scheduleToWindow(schedule);
   if (cronExpressionParts === undefined) {
     return null;
   }
 
   const { startMinutes, endMinutes, daysOfWeek } = cronExpressionParts;
-  const scheduleDays =
-    daysOfWeek.length === WEEKDAYS.length
-      ? 'Daily'
-      : `Weekly on ${daysOfWeek.map(day => WEEKDAYS[day]).join(', ')}`;
+  const frequency = daysOfWeek.length === WEEKDAYS.length ? 'Daily' : 'Weekly';
+  const daysOfWeekNames = daysOfWeek.map(day => WEEKDAYS[day]);
 
-  return `${scheduleDays} from ${formatTime(startMinutes)} to ${formatTime(
-    endMinutes,
-  )} (${timeZone}). Start grace: ${schedule.startGraceDuration}`;
+  return {
+    frequency,
+    daysOfWeek: daysOfWeekNames,
+    time: `${formatTime(startMinutes)} - ${formatTime(endMinutes)}`,
+    isLocalTimeZone: !schedule.timeZone || schedule.timeZone === 'Local',
+  };
 };

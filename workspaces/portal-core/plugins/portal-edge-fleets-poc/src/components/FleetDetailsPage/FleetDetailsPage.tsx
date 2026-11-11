@@ -33,7 +33,7 @@ import {
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
-import { formatUpdateSchedule } from '../../utils/updatePolicy';
+import { extractUpdateScheduleParts } from '../../utils/updatePolicy';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 import CurrentStatusBadge from '../common/CurrentStatusBadge';
 import AppLayout from '../Layout/AppLayout';
@@ -70,7 +70,7 @@ const FleetMaintenanceWindow = ({
         })"`}
       />
       <CardBody>
-        <Text>{formatUpdateSchedule(schedule)}</Text>
+        <Text>{extractUpdateScheduleParts(schedule)}</Text>
       </CardBody>
     </Card>
   );
