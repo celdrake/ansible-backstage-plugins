@@ -18,9 +18,9 @@ export const getFleetOsSourceDetail = (osMode: OsType): string => {
     case 'catalog':
       return 'Managed catalog OS. Portal can set a new target when a newer version is available.';
     case 'custom':
-      return 'Manual image URL from Edge Manager. Catalog update comparison is not available.';
+      return 'Manual image URL. Portal cannot change the OS - manage image updates in Edge Manager.';
     case 'none':
-      return 'OS image can be assigned in Edge Manager.';
+      return 'OS image can be assigned in Edge Manager. Use a Software Catalog OS to enable Portal updates.';
   }
 };
 

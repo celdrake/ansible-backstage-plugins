@@ -10,10 +10,9 @@ import {
 } from '@backstage/ui';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@backstage/core-components';
-import { RiExternalLinkLine } from '@remixicon/react';
+import { RiExternalLinkLine, RiHardDrive3Line } from '@remixicon/react';
 
 import {
-  CatalogItemRefSpec,
   DeviceOsSpec,
   DeviceUpdatePolicySpec,
   Fleet,
@@ -24,23 +23,18 @@ import {
 } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import useFleetDetails from '../../hooks/useFleetDetails';
 import { getFleetsPath, getRhemHomeUrl } from '../../utils/routes';
-import {
-  getOsCatalogItem,
-  getOsCatalogItemDisplayText,
-  getOsCatalogRefDisplayText,
-  getOsDisplayText,
-} from '../../utils/catalogItems';
+import { getOsCatalogItem, getOsDisplayText } from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
 import { extractUpdateScheduleParts } from '../../utils/updatePolicy';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 import CurrentStatusBadge from '../common/CurrentStatusBadge';
+import DefaultEmptyState from '../common/DefaultEmptyState';
 import AppLayout from '../Layout/AppLayout';
 import AppHeader from '../Layout/AppHeader';
 import FleetStatus, { getFleetStatusItem } from '../FleetsPage/FleetStatus';
 import FleetOsUpdateDialog from '../FleetsPage/FleetOsUpdateDialog';
-import styles from './FleetDetailsPage.module.css';
 import {
   getFleetOsMode,
   getFleetOsSourceDetail,
@@ -48,6 +42,7 @@ import {
   OsType,
 } from '../../utils/os';
 import FleetUpdateStatusDetail from './FleetUpdateStatusDetail';
+import styles from './FleetDetailsPage.module.css';
 
 const FleetMaintenanceWindow = ({
   updatePolicy,
@@ -110,9 +105,20 @@ const FleetOsDetails = ({
   catalogItem: CatalogItem | undefined;
   versionToUpdate: CatalogItemVersion | undefined;
 }) => {
+  if (!osSpec?.catalogItemRef && !osSpec?.image) {
+    return (
+      <DefaultEmptyState
+        icon={<RiHardDrive3Line size={28} />}
+        title="No OS defined"
+        description="Assign a Software Catalog OS in Edge Manager to unlock Portal OS targets and rollouts."
+        actionLabel="Assign OS in Edge Manager"
+      />
+    );
+  }
+
   let currentVersion = null;
   let nextVersion = null;
-  let osMode: OsType | null = null;
+  let osMode: OsType;
   if (osSpec?.catalogItemRef) {
     osMode = 'catalog';
     const { currentVersionText, nextVersionText } = getOsDisplayText(
@@ -122,12 +128,9 @@ const FleetOsDetails = ({
     );
     currentVersion = currentVersionText;
     nextVersion = nextVersionText;
-  } else if (osSpec?.image) {
+  } else {
     osMode = 'custom';
     currentVersion = osSpec.image;
-  } else {
-    osMode = 'none';
-    currentVersion = 'No OS image defined';
   }
 
   return (
@@ -152,16 +155,21 @@ const FleetOsDetails = ({
             <Text weight="bold">{nextVersion}</Text>
           </SomeField>
         )}
-        {!osSpec?.catalogItemRef && (
+        {osSpec?.image && (
           <SomeField label="Updates">
             <Text color="secondary">
-              {osSpec?.image
-                ? 'Custom image - manage updates in Edge Manager'
-                : 'No OS image defined'}
+              Portal cannot change a manual OS image
             </Text>
           </SomeField>
         )}
       </div>
+      <Text
+        variant="body-small"
+        color="secondary"
+        className={styles.fleetOsSourceNote}
+      >
+        {getFleetOsSourceDetail(osMode)}
+      </Text>
     </>
   );
 };
@@ -179,16 +187,6 @@ const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
     title = 'Sync pending';
     description =
       'Fleet is still connecting or validating. OS updates are unavailable until status is valid.';
-  } else {
-    const osSpec = fleet.spec.template.spec.os;
-    if (osSpec?.image) {
-      title = 'Custom image · Manage updates in Edge Manager';
-      description =
-        'Shows how many devices match the fleet OS image. Manage image changes in Edge Manager.';
-    } else if (!osSpec?.catalogItemRef) {
-      title = 'No OS image defined';
-      description = 'OS image can be assigned in Edge Manager.';
-    }
   }
 
   return title ? (
@@ -260,8 +258,6 @@ const FleetDetailsPageContent = ({
     updatePolicy?.updateSchedule || updatePolicy?.downloadSchedule,
   );
 
-  const osMode = getFleetOsMode(fleet);
-
   return (
     <Flex direction="column" gap="6">
       {hasUpdates && (
@@ -309,13 +305,6 @@ const FleetDetailsPageContent = ({
               catalogItem={catalogItem}
               versionToUpdate={versionToUpdate}
             />
-            <Text
-              variant="body-small"
-              color="secondary"
-              className={styles.fleetOsSourceNote}
-            >
-              {getFleetOsSourceDetail(osMode)}
-            </Text>
           </CardBody>
         </Card>
 

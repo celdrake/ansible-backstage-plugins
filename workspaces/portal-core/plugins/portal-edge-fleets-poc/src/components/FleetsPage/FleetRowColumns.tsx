@@ -90,7 +90,7 @@ export const FleetOs = ({
   if (osSpec?.image) {
     return <FleetOsText text={osSpec.image} />;
   } else if (!osSpec?.catalogItemRef) {
-    return <FleetOsText text="No OS image defined" />;
+    return <FleetOsText text="No OS defined" />;
   }
   return (
     <FleetCatalogOs
