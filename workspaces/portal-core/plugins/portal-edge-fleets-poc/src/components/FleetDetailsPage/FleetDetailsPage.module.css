@@ -29,18 +29,6 @@
   }
 }
 
-.updateAvailableBanner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--bui-space-4);
-  padding: var(--bui-space-4);
-  border: 1px solid var(--bui-border);
-  border-radius: var(--bui-radius-2);
-  background-color: var(--bui-bg-surface-1);
-}
-
 .rhemBanner {
   display: flex;
   flex-wrap: wrap;

@@ -9,136 +9,17 @@ import {
   Text,
 } from '@backstage/ui';
 
-import {
-  DeviceUpdatePolicySpec,
-  UpdateSchedule,
-} from '@ansible/portal-edge-fleets-poc-common';
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
 import { getOsCatalogItemDisplayText } from '../../utils/catalogItems';
-import {
-  extractUpdateScheduleParts,
-  hasSameDownloadAndInstallSchedules,
-} from '../../utils/updatePolicy';
+
 import DescriptionList, {
   DescriptionListItem,
 } from '../common/DescriptionList';
 
+import FleetUpdatePolicyDetails from '../common/FleetUpdatePolicyDetails';
 import styles from './FleetOsUpdateDialog.module.css';
 
 // CELIA-WIP: check "Text as=strong" for correct style
-
-const UpdateScheduleDetails = ({ schedule }: { schedule: UpdateSchedule }) => {
-  const scheduleParts = extractUpdateScheduleParts(schedule);
-  if (!scheduleParts) {
-    return (
-      <Flex direction="column" gap="1">
-        <Text weight="bold">Custom schedule</Text>
-        <Text variant="body-small" color="secondary">
-          Cron expression:{' '}
-          <code className={styles.fleetScheduleCronExpression}>
-            {schedule.at}
-          </code>
-        </Text>
-        <Text variant="body-small" color="secondary">
-          This expression can't be summarized here. Open Edge Manager for full
-          details and edits.
-        </Text>
-      </Flex>
-    );
-  }
-
-  return (
-    <DescriptionList>
-      <DescriptionListItem label="Frequency">
-        <Text weight="bold" variant="body-small">
-          {scheduleParts.frequency}
-        </Text>
-      </DescriptionListItem>
-      <DescriptionListItem label="Days">
-        <Text weight="bold" variant="body-small">
-          {scheduleParts.daysOfWeek.join(', ')}
-        </Text>
-      </DescriptionListItem>
-      <DescriptionListItem label="Time">
-        <Text weight="bold" variant="body-small">
-          {scheduleParts.time}
-        </Text>
-        <br />
-        <Text
-          variant="body-small"
-          color="secondary"
-          className={styles.maintGrace}
-        >
-          Start grace {schedule.startGraceDuration}
-        </Text>
-      </DescriptionListItem>
-      <DescriptionListItem label="Timezone">
-        <Text variant="body-small">
-          {scheduleParts.isLocalTimeZone
-            ? "Device's local timezone"
-            : schedule.timeZone}
-        </Text>
-      </DescriptionListItem>
-    </DescriptionList>
-  );
-};
-
-const FleetUpdatePolicyDetails = ({
-  updatePolicy,
-}: {
-  updatePolicy: DeviceUpdatePolicySpec;
-}) => {
-  const hasSamePolicies = hasSameDownloadAndInstallSchedules(updatePolicy);
-  const showInstallSchedule = updatePolicy?.updateSchedule && !hasSamePolicies;
-
-  return (
-    <Flex direction="column" gap="2">
-      {updatePolicy?.downloadSchedule && (
-        <>
-          <Text weight="bold" variant="body-small">
-            {hasSamePolicies ? 'Download and install' : 'Download'}
-          </Text>
-          <UpdateScheduleDetails schedule={updatePolicy.downloadSchedule} />
-        </>
-      )}
-      {showInstallSchedule && (
-        <div className={styles.fleetUpdateScheduleSeparator} />
-      )}
-      {showInstallSchedule && updatePolicy?.updateSchedule && (
-        <>
-          <Text weight="bold" variant="body-small">
-            Install
-          </Text>
-          <UpdateScheduleDetails schedule={updatePolicy.updateSchedule} />
-        </>
-      )}
-    </Flex>
-  );
-};
-
-const getPrimaryButton = (
-  title: string,
-  onClick: VoidFunction,
-  isDisabled: boolean,
-) => {
-  return (
-    <Button variant="primary" onClick={onClick} isPending={isDisabled}>
-      {title}
-    </Button>
-  );
-};
-
-const getSecondaryButton = (
-  title: string,
-  onClick: VoidFunction,
-  isDisabled: boolean,
-) => {
-  return (
-    <Button variant="secondary" onClick={onClick} isDisabled={isDisabled}>
-      {title}
-    </Button>
-  );
-};
 
 const FleetOsUpdateFooterActions = ({
   hasUpdateError,

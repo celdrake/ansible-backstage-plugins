@@ -13,7 +13,7 @@ export type FleetStatusType =
   | 'Invalid'
   | 'SyncPending';
 
-type FleetStatusItem = {
+export type FleetStatusItem = {
   id: FleetStatusType;
   level: StatusLevel;
   label: string;

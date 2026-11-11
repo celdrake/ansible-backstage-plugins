@@ -1,4 +1,4 @@
-.currentStatusBadge {
+.statusBadge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -15,7 +15,7 @@
   white-space: nowrap;
 }
 
-.currentStatusBadgeDot {
+.statusBadgeDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;

@@ -31,7 +31,11 @@ const FleetUpdateStatusDetail = ({ fleet }: { fleet: Fleet }) => {
     <>
       <div className={styles.statPair}>
         <div className={styles.statBlock}>
-          <Text as="strong" variant="title-medium" className={styles.statValue}>
+          <Text
+            variant="title-medium"
+            weight="bold"
+            className={styles.statValue}
+          >
             {devicesSummary.total || '0'}
           </Text>
           <Text variant="body-small" color="secondary">
@@ -39,7 +43,11 @@ const FleetUpdateStatusDetail = ({ fleet }: { fleet: Fleet }) => {
           </Text>
         </div>
         <div className={styles.statBlock}>
-          <Text as="strong" variant="title-medium" className={styles.statValue}>
+          <Text
+            variant="title-medium"
+            weight="bold"
+            className={styles.statValue}
+          >
             {onlineCount || '0'}
           </Text>
           <Text variant="body-small" color="secondary">
@@ -52,12 +60,15 @@ const FleetUpdateStatusDetail = ({ fleet }: { fleet: Fleet }) => {
           fleet={fleet}
           header={
             <Text variant="body-small" color="secondary">
-              Goal - discuss with UX
+              vs the fleet's configuration
             </Text>
           }
         />
         <br />
-        PROGRESS BAR ROLLOUT NOTE
+        <Text variant="body-small" color="secondary">
+          Shows how many devices match the fleet's configuration, are updating
+          toward it, or are out of date.
+        </Text>
       </div>
     </>
   );

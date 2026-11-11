@@ -31,19 +31,22 @@ import { getOsCatalogItem, getOsDisplayText } from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
-import { extractUpdateScheduleParts } from '../../utils/updatePolicy';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
-import CurrentStatusBadge from '../common/CurrentStatusBadge';
+import StatusBadge from '../common/StatusBadge';
 import DefaultEmptyState from '../common/DefaultEmptyState';
 import AppLayout from '../Layout/AppLayout';
 import AppHeader from '../Layout/AppHeader';
-import FleetStatus, { getFleetStatusItem } from '../FleetsPage/FleetStatus';
+import FleetStatus, {
+  FleetStatusItem,
+  getFleetStatusItem,
+} from '../FleetsPage/FleetStatus';
 import FleetOsUpdateDialog from '../FleetsPage/FleetOsUpdateDialog';
 import {
   getFleetOsSourceDetail,
   getOsSourceLabel,
   OsType,
 } from '../../utils/os';
+import FleetUpdatePolicyDetails from '../common/FleetUpdatePolicyDetails';
 import FleetUpdateStatusDetail from './FleetUpdateStatusDetail';
 import FleetDetailsApplications from './FleetDetailsApplications';
 import FleetDetailsEvents from './FleetDetailsEvents';
@@ -67,25 +70,9 @@ const FleetMaintenanceWindow = ({
       />
     );
   }
-  const scheduleParts = extractUpdateScheduleParts(schedule);
-  if (!scheduleParts) {
-    return 'TBD NO PARTS';
-  }
 
-  // CELIA-WIP: CHECK WITH NEW DESIGN
   return (
-    <Card>
-      <CardHeader
-        title={`"Maintenance window (${
-          updateSchedule ? 'Update' : 'Download'
-        })"`}
-      />
-      <CardBody>
-        <Text>{`${scheduleParts.daysOfWeek.join(', ')} at ${
-          scheduleParts.time
-        }`}</Text>
-      </CardBody>
-    </Card>
+    <FleetUpdatePolicyDetails updatePolicy={updatePolicy} asSeparateBlocks />
   );
 };
 
@@ -114,10 +101,12 @@ const FleetOsDetails = ({
   osSpec,
   catalogItem,
   versionToUpdate,
+  canUpdate,
 }: {
   osSpec: DeviceOsSpec | undefined;
   catalogItem: CatalogItem | undefined;
   versionToUpdate: CatalogItemVersion | undefined;
+  canUpdate: boolean;
 }) => {
   if (!osSpec?.catalogItemRef && !osSpec?.image) {
     return (
@@ -154,11 +143,10 @@ const FleetOsDetails = ({
           {currentVersion}
         </Text>
 
-        {versionToUpdate ? (
-          <UpdateAvailableBadge />
-        ) : osSpec?.catalogItemRef ? (
-          <CurrentStatusBadge text="Current" />
-        ) : null}
+        {versionToUpdate && canUpdate && <UpdateAvailableBadge />}
+        {osMode === 'catalog' && !versionToUpdate && (
+          <StatusBadge text="Up to date" />
+        )}
       </div>
       <div className={styles.fleetOsExtraSection}>
         <SomeField label="Source">
@@ -188,16 +176,14 @@ const FleetOsDetails = ({
   );
 };
 
-const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
-  const fleetStatusItem = getFleetStatusItem(fleet.status);
-
+const FleetAlert = ({ statusItem }: { statusItem: FleetStatusItem }) => {
   let title;
   let description;
-  if (fleetStatusItem.id === 'Invalid') {
+  if (statusItem.id === 'Invalid') {
     title = 'Fleet invalid';
     description =
       'Fleet specification problem - OS updates are unavailable. Check with an administrator or open Edge Manager.';
-  } else if (fleetStatusItem.id === 'SyncPending') {
+  } else if (statusItem.id === 'SyncPending') {
     title = 'Sync pending';
     description =
       'Fleet is still connecting or validating. OS updates are unavailable until status is valid.';
@@ -251,6 +237,8 @@ const FleetDetailsCardHeader = ({
   );
 };
 
+// CELIA-WIP: User permissions
+
 const FleetDetailsPageContent = ({
   fleet,
   fleetUpdateState,
@@ -289,44 +277,42 @@ const FleetDetailsPageContent = ({
 
   const apps = fleet.spec.template.spec.applications || [];
 
+  const fleetStatusItem = getFleetStatusItem(fleet.status);
+  const canUpdate = hasUpdates && fleetStatusItem.id === 'Valid';
+
   return (
     <Flex direction="column" gap="6">
-      {hasUpdates && (
-        <div className={styles.updateAvailableBanner}>
-          <Flex direction="column" gap="1">
-            <Text weight="bold">OS update ready</Text>
-            {hasUpdatePolicy ? (
-              <Text variant="body-small" color="secondary">
-                Set a new catalog OS target here. Fleet updates now. Pending OS
-                and other fleet changes apply on devices during the next
-                maintenance window - managed in Edge Manager.
-              </Text>
-            ) : (
-              <Text variant="body-small" color="secondary">
-                Set a new catalog OS target here. No maintenance window is set.
-                Fleet updates now and devices reconcile the new OS target as
-                they connect.
-              </Text>
-            )}
-          </Flex>
-          <Button
-            variant="primary"
-            onClick={() => {
-              if (!catalogItem || !versionToUpdate) {
-                return;
-              }
-              fleetUpdateState.openFleetUpdate(
-                fleet,
-                catalogItem,
-                versionToUpdate,
-              );
-            }}
-          >
-            Update OS target
-          </Button>
-        </div>
+      {canUpdate && (
+        <Alert
+          status="info"
+          title="OS update ready"
+          description={
+            hasUpdatePolicy
+              ? `Set a new catalog OS target here. Fleet updates now. Pending OS and other fleet changes apply on devices during the next maintenance window - managed in Edge Manager.`
+              : `Set a new catalog OS target here. No maintenance window is set. Fleet updates now and devices reconcile the new OS target as they connect.`
+          }
+          customActions={
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (!catalogItem || !versionToUpdate) {
+                  return;
+                }
+                fleetUpdateState.openFleetUpdate(
+                  fleet,
+                  catalogItem,
+                  versionToUpdate,
+                );
+              }}
+            >
+              Update OS target
+            </Button>
+          }
+        />
       )}
-      <FleetAlert fleet={fleet} />
+
+      <FleetAlert statusItem={fleetStatusItem} />
+
       <div className={styles.fleetDetailsPrimaryGrid}>
         <Card className={styles.fleetDetailsCard}>
           <FleetDetailsCardHeader title="OS target" />
@@ -335,6 +321,7 @@ const FleetDetailsPageContent = ({
               osSpec={osSpec}
               catalogItem={catalogItem}
               versionToUpdate={versionToUpdate}
+              canUpdate={canUpdate}
             />
           </CardBody>
         </Card>

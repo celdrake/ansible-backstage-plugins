@@ -20,15 +20,3 @@
   background-color: color-mix(in srgb, var(--bui-bg-info) 65%, white);
   border: 1px solid color-mix(in srgb, var(--bui-border-info) 45%, white);
 }
-
-.fleetScheduleCronExpression {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: inherit;
-  line-height: inherit;
-  overflow-wrap: anywhere;
-  font-weight: var(--bui-font-weight-regular, 400);
-}
-
-.fleetUpdateScheduleSeparator {
-  border-top: 1px solid color-mix(in srgb, var(--bui-border-info) 28%, white);
-}
