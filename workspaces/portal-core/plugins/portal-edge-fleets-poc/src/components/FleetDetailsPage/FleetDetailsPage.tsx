@@ -10,7 +10,11 @@ import {
 } from '@backstage/ui';
 import { useParams } from 'react-router-dom';
 import { Progress } from '@backstage/core-components';
-import { RiExternalLinkLine, RiHardDrive3Line } from '@remixicon/react';
+import {
+  RiExternalLinkLine,
+  RiHardDrive3Line,
+  RiSettings3Line,
+} from '@remixicon/react';
 
 import {
   DeviceOsSpec,
@@ -36,12 +40,13 @@ import AppHeader from '../Layout/AppHeader';
 import FleetStatus, { getFleetStatusItem } from '../FleetsPage/FleetStatus';
 import FleetOsUpdateDialog from '../FleetsPage/FleetOsUpdateDialog';
 import {
-  getFleetOsMode,
   getFleetOsSourceDetail,
   getOsSourceLabel,
   OsType,
 } from '../../utils/os';
 import FleetUpdateStatusDetail from './FleetUpdateStatusDetail';
+import FleetDetailsApplications from './FleetDetailsApplications';
+import FleetDetailsEvents from './FleetDetailsEvents';
 import styles from './FleetDetailsPage.module.css';
 
 const FleetMaintenanceWindow = ({
@@ -53,7 +58,14 @@ const FleetMaintenanceWindow = ({
   const downloadSchedule = updatePolicy?.downloadSchedule;
   const schedule = updateSchedule || downloadSchedule;
   if (!schedule) {
-    return null;
+    return (
+      <DefaultEmptyState
+        icon={<RiSettings3Line size={28} />}
+        title="No maintenance window"
+        description="Devices receive updates as soon as they are available. Set a window in Edge Manager to control download and install timing."
+        actionLabel="Set window in Edge Manager"
+      />
+    );
   }
   const scheduleParts = extractUpdateScheduleParts(schedule);
   if (!scheduleParts) {
@@ -95,6 +107,8 @@ const SomeField = ({
     </div>
   );
 };
+
+// CELIA-WIP: Check overall layout and responsiveness
 
 const FleetOsDetails = ({
   osSpec,
@@ -182,7 +196,7 @@ const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
   if (fleetStatusItem.id === 'Invalid') {
     title = 'Fleet invalid';
     description =
-      'Fleet specification problem - OS updates are unavailable. Check with an administrator or open Edge Manager';
+      'Fleet specification problem - OS updates are unavailable. Check with an administrator or open Edge Manager.';
   } else if (fleetStatusItem.id === 'SyncPending') {
     title = 'Sync pending';
     description =
@@ -190,7 +204,22 @@ const FleetAlert = ({ fleet }: { fleet: Fleet }) => {
   }
 
   return title ? (
-    <Alert status="warning" title={title} description={description} />
+    <Alert
+      status="warning"
+      title={title}
+      description={description}
+      customActions={
+        <ButtonLink
+          variant="secondary"
+          href={getRhemHomeUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          iconEnd={<RiExternalLinkLine aria-hidden />}
+        >
+          Open Edge Manager
+        </ButtonLink>
+      }
+    />
   ) : null;
 };
 
@@ -258,6 +287,8 @@ const FleetDetailsPageContent = ({
     updatePolicy?.updateSchedule || updatePolicy?.downloadSchedule,
   );
 
+  const apps = fleet.spec.template.spec.applications || [];
+
   return (
     <Flex direction="column" gap="6">
       {hasUpdates && (
@@ -296,7 +327,7 @@ const FleetDetailsPageContent = ({
         </div>
       )}
       <FleetAlert fleet={fleet} />
-      <div className={styles.fleetDetailsMainRow}>
+      <div className={styles.fleetDetailsPrimaryGrid}>
         <Card className={styles.fleetDetailsCard}>
           <FleetDetailsCardHeader title="OS target" />
           <CardBody className={styles.fleetDetailsCardBody}>
@@ -309,66 +340,42 @@ const FleetDetailsPageContent = ({
         </Card>
 
         <Card className={styles.fleetDetailsCard}>
-          <CardHeader>
-            <FleetDetailsCardHeader title="Devices" />
-          </CardHeader>
+          <FleetDetailsCardHeader title="Devices" />
           <CardBody className={styles.fleetDetailsCardBody}>
             <FleetUpdateStatusDetail fleet={fleet} />
           </CardBody>
         </Card>
+        <Card className={styles.fleetDetailsCard}>
+          <FleetDetailsCardHeader title="Maintenance window" />
+          <CardBody className={styles.fleetDetailsCardBody}>
+            <FleetMaintenanceWindow updatePolicy={updatePolicy} />
+          </CardBody>
+        </Card>
       </div>
 
-      <Card className={styles.fleetDetailsCard}>
-        <CardHeader>
-          <FleetDetailsCardHeader title="Maintenance window" />
-        </CardHeader>
-        <CardBody className={styles.fleetDetailsCardBody}>
-          <FleetMaintenanceWindow updatePolicy={updatePolicy} />
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Applications" />
-        <CardBody>
-          <Flex direction="column" gap="4">
-            <Text color="secondary">
-              Applications on this fleet — versions and posture at a glance.
-              Update, configure, and troubleshoot apps in Red Hat Edge Manager.
-            </Text>
-            APPS HERE
-            <Flex
-              align="center"
-              justify="between"
-              gap="4"
-              className={styles.rhemBanner}
-            >
-              <Text variant="body-small" color="secondary">
-                Portal focuses on OS updates for this fleet. Open Edge Manager
-                for the full application experience.
-              </Text>
-              <ButtonLink
-                variant="secondary"
-                href={getRhemHomeUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                iconEnd={<RiExternalLinkLine aria-hidden />}
-              >
-                Open Edge Manager
-              </ButtonLink>
-            </Flex>
-          </Flex>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader title="Update activity" />
-        <CardBody>
-          TODO
-          <Text variant="body-small" color="secondary">
-            Device-level diagnostics stay in Edge Manager. This timeline shows
-            fleet OS update milestones started from Portal.
-          </Text>
-        </CardBody>
-      </Card>
+      <div className={styles.fleetDetailsSecondaryGrid}>
+        <Card>
+          <FleetDetailsCardHeader
+            title="Applications"
+            meta={
+              apps.length > 0 && (
+                <Text variant="body-small" color="secondary">
+                  {`${apps.length} on this fleet`}
+                </Text>
+              )
+            }
+          />
+          <CardBody className={styles.fleetDetailsCardBody}>
+            <FleetDetailsApplications apps={apps} />
+          </CardBody>
+        </Card>
+        <Card>
+          <FleetDetailsCardHeader title="Events" />
+          <CardBody className={styles.fleetDetailsCardBody}>
+            <FleetDetailsEvents />
+          </CardBody>
+        </Card>
+      </div>
     </Flex>
   );
 };

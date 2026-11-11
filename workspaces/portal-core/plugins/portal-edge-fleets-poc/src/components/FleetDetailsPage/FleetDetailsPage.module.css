@@ -1,20 +1,32 @@
-.fleetDetailsMainRow {
+.fleetDetailsPrimaryGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--bui-space-4);
 }
 
-@media (max-width: 900px) {
-  .fleetDetailsMainRow {
+@media (max-width: 1100px) {
+  .fleetDetailsPrimaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .fleetDetailsPrimaryGrid {
     grid-template-columns: 1fr;
   }
 }
 
-.fleetDetailsMainRowItem {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: var(--bui-space-3);
+.fleetDetailsSecondaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--bui-space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .fleetDetailsSecondaryGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .updateAvailableBanner {

@@ -4,6 +4,8 @@ import {
   DeviceSummaryStatusType,
   Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
+import { RiHardDrive3Line } from '@remixicon/react';
+import DefaultEmptyState from '../common/DefaultEmptyState';
 import FleetDevicesBar from '../FleetsPage/FleetDevicesBar';
 import styles from './FleetUpdateStatusDetail.module.css';
 
@@ -12,8 +14,19 @@ const FleetUpdateStatusDetail = ({ fleet }: { fleet: Fleet }) => {
   if (!devicesSummary) {
     return 'Device mix not available for this fleet';
   }
-  const updatedStatus = devicesSummary.updateStatus;
-  const summaryStatus = devicesSummary.summaryStatus;
+  if (devicesSummary.total === 0) {
+    return (
+      <DefaultEmptyState
+        icon={<RiHardDrive3Line size={28} />}
+        title="No devices in this fleet yet"
+        description="Assign devices to this fleet to see their status."
+      />
+    );
+  }
+  const onlineCount =
+    devicesSummary.summaryStatus[
+      DeviceSummaryStatusType.DeviceSummaryStatusOnline
+    ] || 0;
   return (
     <>
       <div className={styles.statPair}>
@@ -27,8 +40,7 @@ const FleetUpdateStatusDetail = ({ fleet }: { fleet: Fleet }) => {
         </div>
         <div className={styles.statBlock}>
           <Text as="strong" variant="title-medium" className={styles.statValue}>
-            {summaryStatus[DeviceSummaryStatusType.DeviceSummaryStatusOnline] ||
-              '0'}
+            {onlineCount || '0'}
           </Text>
           <Text variant="body-small" color="secondary">
             Online
@@ -44,6 +56,7 @@ const FleetUpdateStatusDetail = ({ fleet }: { fleet: Fleet }) => {
             </Text>
           }
         />
+        <br />
         PROGRESS BAR ROLLOUT NOTE
       </div>
     </>
