@@ -60,6 +60,10 @@ const FleetMaintenanceWindow = ({
   if (!schedule) {
     return null;
   }
+  const scheduleParts = extractUpdateScheduleParts(schedule);
+  if (!scheduleParts) {
+    return 'TBD NO PARTS';
+  }
 
   // CELIA-WIP: CHECK WITH NEW DESIGN
   return (
@@ -70,7 +74,9 @@ const FleetMaintenanceWindow = ({
         })"`}
       />
       <CardBody>
-        <Text>{extractUpdateScheduleParts(schedule)}</Text>
+        <Text>{`${scheduleParts.daysOfWeek.join(', ')} at ${
+          scheduleParts.time
+        }`}</Text>
       </CardBody>
     </Card>
   );
@@ -127,11 +133,7 @@ const FleetOsDetails = ({
   return (
     <>
       <div className={styles.fleetTargetOs}>
-        <Text
-          as="strong"
-          variant="title-small"
-          style={{ fontSize: '1.5rem', fontWeight: '700' }}
-        >
+        <Text as="strong" variant="body-medium" weight="bold">
           {currentVersion}
         </Text>
 
@@ -288,11 +290,8 @@ const FleetDetailsPageContent = ({
               }
               fleetUpdateState.openFleetUpdate(
                 fleet,
+                catalogItem,
                 versionToUpdate,
-                getOsCatalogItemDisplayText(
-                  catalogItem,
-                  versionToUpdate.version,
-                ),
               );
             }}
           >
