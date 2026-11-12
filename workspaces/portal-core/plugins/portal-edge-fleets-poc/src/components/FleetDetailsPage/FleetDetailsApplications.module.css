@@ -1,0 +1,154 @@
+.fleetApplicationsList {
+  --app-col-template: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  --app-col-gap: var(--bui-space-4);
+  --app-row-pad: var(--bui-space-3);
+  --app-chevron-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-2);
+  min-width: 0;
+}
+
+.fleetApplicationsListHeader {
+  display: grid;
+  grid-template-columns: var(--app-col-template);
+  align-items: center;
+  column-gap: var(--app-col-gap);
+  box-sizing: border-box;
+  width: 100%;
+  /* Match Accordion horizontal padding + chevron so titles sit over values */
+  padding-left: var(--app-row-pad);
+  padding-right: calc(var(--app-row-pad) + var(--app-chevron-size));
+}
+
+.fleetApplicationsListHeaderCell {
+  margin: 0;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.fleetApplicationsAccordionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-2);
+}
+
+.fleetApplicationsAccordionTrigger {
+  display: grid;
+  grid-template-columns: var(--app-col-template);
+  align-items: center;
+  column-gap: var(--app-col-gap);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.fleetApplicationsAccordionCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.fleetApplicationsAccordionName {
+  margin: 0;
+  line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fleetApplicationsAccordionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-3);
+  padding: var(--bui-space-2) 0 var(--bui-space-1);
+}
+
+.fleetApplicationsAccordionDescription {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.fleetApplicationsManualNote {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.fleetApplicationsStaticRow {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--app-row-pad);
+  padding-right: calc(var(--app-row-pad) + var(--app-chevron-size));
+  border: 1px solid var(--bui-border);
+  border-radius: var(--bui-radius-3, 8px);
+  background-color: var(--bui-bg-surface, #fff);
+}
+
+@media (max-width: 640px) {
+  .fleetApplicationsListHeader,
+  .fleetApplicationsAccordionTrigger {
+    grid-template-columns: 1fr;
+  }
+
+  .fleetApplicationsListHeader {
+    padding-right: var(--app-row-pad);
+  }
+}
+
+.fleetAppDetailsGrid {
+  display: grid;
+  grid-template-columns: 6.75rem minmax(0, 1fr);
+  column-gap: var(--bui-space-4);
+  row-gap: var(--bui-space-2);
+  align-items: baseline;
+}
+
+.fleetAppTypeBadge,
+.fleetAppSourceCatalog,
+.fleetAppSourceManual {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: var(--bui-radius-1, 4px);
+  border: 1px solid var(--bui-border);
+  background-color: var(--bui-bg-surface, #fff);
+  color: var(--bui-fg-primary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fleetAppSourceCatalog {
+  border-color: color-mix(
+    in srgb,
+    var(--bui-border-info) 55%,
+    var(--bui-border)
+  );
+  color: var(--bui-fg-info);
+}
+
+.fleetAppSourceManual {
+  color: var(--bui-fg-secondary);
+}
+
+.fleetAppTypeBadge {
+  border-color: color-mix(
+    in srgb,
+    var(--bui-fg-primary) 22%,
+    var(--bui-border)
+  );
+  background-color: color-mix(in srgb, var(--bui-fg-primary) 4%, transparent);
+}
