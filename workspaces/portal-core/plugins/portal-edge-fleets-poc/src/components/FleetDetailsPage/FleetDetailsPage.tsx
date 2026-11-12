@@ -264,8 +264,9 @@ const FleetDetailsPageContent = ({
     );
   }
 
+  const fleetCatalogItems = catalogItemsState.catalogItemsList?.items || [];
   const { catalogItem, versionToUpdate } = osCatalogRef
-    ? getOsCatalogItem(osCatalogRef, catalogItemsState.catalogItemsList.items)
+    ? getOsCatalogItem(osCatalogRef, fleetCatalogItems)
     : { catalogItem: undefined, versionToUpdate: undefined };
 
   // CELIA-WIP: Design wants to block updates if the fleet is invalid
@@ -353,7 +354,10 @@ const FleetDetailsPageContent = ({
             }
           />
           <CardBody className={styles.fleetDetailsCardBody}>
-            <FleetDetailsApplications apps={apps} />
+            <FleetDetailsApplications
+              apps={apps}
+              catalogItems={fleetCatalogItems}
+            />
           </CardBody>
         </Card>
         <Card>
