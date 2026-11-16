@@ -319,7 +319,6 @@ const FleetDetailsPageContent = ({
   );
 };
 
-// CELIA-WIP CHECK PAGE STRUCTURE, TITLE FONT SIZE IS NOT CORRECT
 const FleetDetailsPage = () => {
   const { fleetName = '' } = useParams<{ fleetName: string }>();
   const { data: fleet, isLoading, error, refetch } = useFleetDetails(fleetName);

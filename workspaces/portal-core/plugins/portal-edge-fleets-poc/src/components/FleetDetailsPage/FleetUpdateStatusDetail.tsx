@@ -7,6 +7,7 @@ import {
 import { RiHardDrive3Line } from '@remixicon/react';
 import DefaultEmptyState from '../common/DefaultEmptyState';
 import FleetDevicesBar from '../FleetsPage/FleetDevicesBar';
+
 import styles from './FleetUpdateStatusDetail.module.css';
 
 const FleetUpdateStatusDetail = ({ fleet }: { fleet: Fleet }) => {

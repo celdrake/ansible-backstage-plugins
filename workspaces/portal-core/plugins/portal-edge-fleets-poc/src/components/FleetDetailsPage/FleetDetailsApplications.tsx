@@ -16,7 +16,6 @@ import {
 import { CatalogItem } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import DefaultEmptyState from '../common/DefaultEmptyState';
 import ViewField from '../common/ViewField';
-
 import { getRhemHomeUrl } from '../../utils/routes';
 import { getNextCatalogItemUpdate } from '../../utils/catalogItems';
 

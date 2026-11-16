@@ -25,8 +25,10 @@ import {
   getOsCatalogRefDisplayText,
 } from '../../utils/catalogItems';
 import { getFleetDetailsPath } from '../../utils/routes';
+import { getFleetLink } from '../../utils/rhem';
 import { FleetCatalogItemsState } from './types';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
+
 import styles from './FleetsPage.module.css';
 
 const FleetOsText = ({ text }: { text: string }) => {
@@ -98,15 +100,6 @@ export const FleetOs = ({
       catalogItemState={catalogItemState}
     />
   );
-};
-
-// CELIA-WIP: UNIFY THIS ROUTE
-const RHEM_HOME_URL = 'https://edge-manager.redhat.com';
-
-const getEdgeManagerLink = (fleet: Fleet) => {
-  // CELIA-WIP: DO we have a direct link for ACM?
-  // REVIEW CORRECT LINK FOR DIFFERENT DEPLOYMENT TYPES
-  return `${RHEM_HOME_URL}/fleets/${fleet.metadata.name}`;
 };
 
 const shouldLinkToEdgeManager = (fleet: Fleet) => {
@@ -209,7 +202,7 @@ export const FleetActions = ({
             )}
             {hasRhemLink && (
               <MenuItem
-                href={getEdgeManagerLink(fleet)}
+                href={getFleetLink(fleet)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.fleetActionsMenuItem}
