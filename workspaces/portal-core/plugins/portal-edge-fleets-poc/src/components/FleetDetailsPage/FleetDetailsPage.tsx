@@ -363,7 +363,7 @@ const FleetDetailsPageContent = ({
         <Card>
           <FleetDetailsCardHeader title="Events" />
           <CardBody className={styles.fleetDetailsCardBody}>
-            <FleetDetailsEvents />
+            <FleetDetailsEvents fleetName={fleetName} />
           </CardBody>
         </Card>
       </div>

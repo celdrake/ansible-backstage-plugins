@@ -29,6 +29,12 @@ type FleetListQuery = {
   continueToken?: string;
 };
 
+type FleetEventQuery = {
+  fieldSelector?: string;
+  limit?: string;
+  continueToken?: string;
+};
+
 type FlightctlApiCallOptions = {
   method?: 'GET' | 'PATCH';
   body?: string;
@@ -46,6 +52,7 @@ const FLIGHTCTL_AAP_ORGANIZATION_ID = '1';
 
 const MAX_FLEET_NAMES_PER_SELECTOR = 100;
 const MAX_FLEET_NAME_LENGTH = 253;
+const MAX_EVENT_FIELD_SELECTOR_LENGTH = 2048;
 const FLEET_NAME_PATTERN =
   /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/;
 const FLEET_OS_SPEC_PATH = '/spec/template/spec/os';
@@ -133,6 +140,26 @@ async function fetchFleetDetails(
   );
   url.searchParams.set('org_id', options.organizationId);
   url.searchParams.set('addDevicesSummary', 'true');
+
+  return flightctlApiCall(url, options);
+}
+
+// Retrieves fleet events using the caller's field selector.
+async function fetchFleetEvents(
+  options: FlightctlRequestOptions,
+  query: FleetEventQuery,
+): Promise<FlightctlApiResult> {
+  const url = new URL('/api/v1/events', options.apiBaseUrl);
+  url.searchParams.set('org_id', options.organizationId);
+  if (query.fieldSelector) {
+    url.searchParams.set('fieldSelector', query.fieldSelector);
+  }
+  if (query.limit) {
+    url.searchParams.set('limit', query.limit);
+  }
+  if (query.continueToken) {
+    url.searchParams.set('continue', query.continueToken);
+  }
 
   return flightctlApiCall(url, options);
 }
@@ -341,6 +368,31 @@ export function createFlightctlFleetsRouter(
 
     await proxyFlightctlRequest(req, res, options, requestOptions =>
       fetchFleetDetails(requestOptions, fleetName),
+    );
+  });
+
+  router.get('/events', async (req, res) => {
+    const fieldSelector = readOptionalQueryString(req.query.fieldSelector);
+    if (!fieldSelector) {
+      res.status(400).json({
+        error: 'Provide a fieldSelector for an event request.',
+      });
+      return;
+    }
+    if (fieldSelector.length > MAX_EVENT_FIELD_SELECTOR_LENGTH) {
+      res.status(400).json({
+        error: 'Provide a shorter event fieldSelector.',
+      });
+      return;
+    }
+
+    const query: FleetEventQuery = {
+      fieldSelector,
+      limit: readOptionalQueryString(req.query.limit),
+      continueToken: readOptionalQueryString(req.query.continue),
+    };
+    await proxyFlightctlRequest(req, res, options, requestOptions =>
+      fetchFleetEvents(requestOptions, query),
     );
   });
 

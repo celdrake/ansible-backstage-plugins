@@ -82,7 +82,7 @@ const AppDetailField = ({
   children,
 }: React.PropsWithChildren<{ label: string }>) => {
   return (
-    <div>
+    <div style={{ display: 'contents' }}>
       <Text variant="body-small" color="secondary">
         {label}
       </Text>
@@ -287,13 +287,17 @@ const FleetDetailsApplications = ({
       />
     );
   }
+
+  const hasManualApps = apps.some(app => !isCatalogRefSpecApp(app));
+
   return (
     <Flex direction="column" gap="4">
       <FleetApplicationsList apps={apps} catalogItems={catalogItems} />
       <Flex align="center" justify="between" gap="4">
         <Text variant="body-small" color="secondary">
-          Catalog apps show version and channel. Manual apps are managed in Edge
-          Manager.
+          {hasManualApps
+            ? 'Catalog apps show version and channel when available. Manual apps are managed in Edge Manager.'
+            : 'Portal focuses on OS updates. Manage apps in Edge Manager.'}
         </Text>
         <ButtonLink
           variant="secondary"
