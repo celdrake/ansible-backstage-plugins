@@ -55,7 +55,6 @@ const useFleetList = () => {
 
   const onSearchChange = useCallback(
     (value: string) => {
-      // CELIA-WIP: VALIDATE PROPERLY and fix UX of the component
       if (value.includes(' ')) {
         setSearchError('Spaces are not allowed in search');
         return;

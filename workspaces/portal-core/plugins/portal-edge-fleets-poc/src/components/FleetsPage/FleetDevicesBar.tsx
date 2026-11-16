@@ -1,13 +1,11 @@
+import { Text } from '@backstage/ui';
 import {
   DevicesSummary,
   DeviceSummaryStatusType,
   DeviceUpdatedStatusType,
   Fleet,
 } from '@ansible/portal-edge-fleets-poc-common';
-import { Text } from '@backstage/ui';
 import styles from './FleetDevicesBar.module.css';
-
-// CELIA-WIP: MOVE TO COMMON??
 
 const getDevicesUpdateBreakdown = (
   updateStatus: DevicesSummary['updateStatus'],
@@ -45,7 +43,6 @@ const getDevicesUpdateBreakdown = (
   return segments;
 };
 
-// CELIA-WIP: CONTENT NOT FITTING FOR 0 DEVICES TOTAL
 const FleetDevicesBar = ({
   fleet,
   header,

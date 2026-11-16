@@ -4,7 +4,6 @@ import {
   ButtonLink,
   Card,
   CardBody,
-  CardHeader,
   Flex,
   Text,
 } from '@backstage/ui';
@@ -47,9 +46,10 @@ import {
   OsType,
 } from '../../utils/os';
 import FleetUpdatePolicyDetails from '../common/FleetUpdatePolicyDetails';
+import FleetDetailsCardHeader from './FleetDetailsCardHeader';
 import FleetUpdateStatusDetail from './FleetUpdateStatusDetail';
 import FleetDetailsApplications from './FleetDetailsApplications';
-import FleetDetailsEvents from './FleetDetailsEvents';
+import FleetEventsCard from './FleetEventsCard';
 import styles from './FleetDetailsPage.module.css';
 
 const FleetMaintenanceWindow = ({
@@ -209,34 +209,6 @@ const FleetAlert = ({ statusItem }: { statusItem: FleetStatusItem }) => {
   ) : null;
 };
 
-const FleetDetailsCardHeader = ({
-  title,
-  meta,
-  description,
-}: {
-  title: string;
-  meta?: React.ReactNode;
-  description?: React.ReactNode;
-}) => {
-  return (
-    <CardHeader>
-      <Flex direction="column" gap="1" className={styles.fleetDetailsCardTitle}>
-        <Flex justify="between" align="center" gap="3">
-          <Text weight="bold">{title}</Text>
-          {meta && (
-            <div className={styles.fleetDetailsCardTitleMeta}>{meta}</div>
-          )}
-        </Flex>
-        {description && (
-          <Text variant="body-small" color="secondary">
-            {description}
-          </Text>
-        )}
-      </Flex>
-    </CardHeader>
-  );
-};
-
 // CELIA-WIP: User permissions
 
 const FleetDetailsPageContent = ({
@@ -360,12 +332,7 @@ const FleetDetailsPageContent = ({
             />
           </CardBody>
         </Card>
-        <Card>
-          <FleetDetailsCardHeader title="Events" />
-          <CardBody className={styles.fleetDetailsCardBody}>
-            <FleetDetailsEvents fleetName={fleetName} />
-          </CardBody>
-        </Card>
+        <FleetEventsCard fleetName={fleetName} />
       </div>
     </Flex>
   );

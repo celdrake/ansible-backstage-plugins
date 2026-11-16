@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import * as React from 'react';
 import { Event, type EventList } from '@ansible/portal-edge-fleets-poc-common';
 import useFetchPeriodically from './useFetchPeriodically';
 import useFlightCtlApiFetch from './useFlightCtlApiFetch';
@@ -33,7 +33,7 @@ export type UseFleetEventsOptions = {
   intervalMs?: number;
 };
 
-export type DisplayEvent = Pick<Event, 'message'> & {
+export type DisplayEvent = Pick<Event, 'type' | 'message'> & {
   id: string;
   dateText: string;
   reasonText: string;
@@ -41,6 +41,7 @@ export type DisplayEvent = Pick<Event, 'message'> & {
 
 export type FleetEventsState = {
   events: DisplayEvent[];
+  lastRefreshAt: number;
   isLoading: boolean;
   isUpdating: boolean;
   error: Error | undefined;
@@ -59,7 +60,7 @@ const buildFleetEventsFieldSelector = (
   ].join(',');
 };
 
-const DEFAULT_INTERVAL_MS = 60_000;
+const DEFAULT_INTERVAL_MS = 3 * 60_000; // 3 minutes
 const MAX_LIMIT = 500;
 
 // Omit the event message for other event reasons, as they are almost identical to the reason itself.
@@ -85,6 +86,7 @@ const eventMapper = (event: Event): DisplayEvent => {
   const eventReasonTitles = getEventReasonTitles();
   return {
     id: event.metadata.name as string,
+    type: event.type,
     message: EVENT_TYPES_WITH_MESSAGE.includes(event.reason)
       ? event.message
       : '',
@@ -104,9 +106,11 @@ const useFleetEvents = ({
   limit,
 }: UseFleetEventsOptions): FleetEventsState => {
   const flightctlFetch = useFlightCtlApiFetch();
+  const [lastRefreshAt, setLastRefreshAt] = React.useState<number>(0);
+
   const hasFleetName = fleetName.length > 0;
 
-  const fetchEvents = useCallback(
+  const fetchEvents = React.useCallback(
     async (signal: AbortSignal) => {
       const query = new URLSearchParams({
         limit: String(limit || MAX_LIMIT),
@@ -120,6 +124,7 @@ const useFleetEvents = ({
         `/events?${query.toString()}`,
         signal,
       );
+      setLastRefreshAt(Date.now());
       return eventList.items;
     },
     [flightctlFetch, fleetName, limit, eventType],
@@ -132,15 +137,16 @@ const useFleetEvents = ({
 
   const { data, isLoading, isUpdating, error, refetch } = periodicState;
 
-  return useMemo(
+  return React.useMemo(
     () => ({
       events: (data ?? []).map(eventMapper),
+      lastRefreshAt,
       isLoading,
       isUpdating,
       error,
       refetch,
     }),
-    [data, error, isLoading, isUpdating, refetch],
+    [data, error, isLoading, isUpdating, refetch, lastRefreshAt],
   );
 };
 

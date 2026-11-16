@@ -34,7 +34,6 @@ import FleetOsUpdateDialog from './FleetOsUpdateDialog';
 
 import styles from './FleetsPage.module.css';
 // CELIA-WIP: translations??
-// CELIA-WIP: which fleets are fetched? which order?
 
 const FleetsTableEmptyState = ({ hasSearch }: { hasSearch: boolean }) => {
   return (
