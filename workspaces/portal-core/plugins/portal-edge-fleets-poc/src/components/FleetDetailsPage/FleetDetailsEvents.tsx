@@ -2,8 +2,10 @@ import React from 'react';
 import { Flex, Select, Text } from '@backstage/ui';
 import { RiInformationLine } from '@remixicon/react';
 
-import { Event } from '@ansible/portal-edge-fleets-poc-common';
-import useFleetEvents, { EventTypeFilter } from '../../hooks/useFleetEvents';
+import useFleetEvents, {
+  EventTypeFilter,
+  DisplayEvent,
+} from '../../hooks/useFleetEvents';
 import styles from './FleetDetailsEvents.module.css';
 
 type EventTypeFilterOption = {
@@ -14,15 +16,16 @@ type EventTypeFilterOption = {
 const EVENT_TYPE_FILTER_OPTIONS: Array<EventTypeFilterOption> = [
   { id: 'all', label: 'All types' },
   { id: 'ResourceUpdated', label: 'Fleet updated' },
+  { id: 'ResourceUpdateFailed', label: 'Fleet update failed' },
   { id: 'FleetValid', label: 'Fleet valid' },
   { id: 'FleetInvalid', label: 'Fleet invalid' },
   { id: 'FleetRolloutCreated', label: 'Fleet rollout created' },
   { id: 'FleetRolloutStarted', label: 'Fleet rollout started' },
   { id: 'FleetRolloutCompleted', label: 'Fleet rollout completed' },
+  { id: 'FleetRolloutFailed', label: 'Fleet rollout failed' },
 ];
 
-// CELIA WIP FORMAT TIME
-const FleetEventRow = ({ event }: { event: Event }) => {
+const FleetEventRow = ({ event }: { event: DisplayEvent }) => {
   return (
     <Flex gap="2" align="start">
       <RiInformationLine
@@ -31,10 +34,10 @@ const FleetEventRow = ({ event }: { event: Event }) => {
         size={18}
       />
       <Flex direction="column" gap="1" className={styles.fleetEventItemBody}>
-        <Text weight="bold">{event.reason}</Text>
+        <Text weight="bold">{event.reasonText}</Text>
         <Text variant="body-small">{event.message}</Text>
         <Text variant="body-small" color="secondary">
-          {event.metadata.creationTimestamp}
+          {event.dateText}
         </Text>
       </Flex>
     </Flex>
@@ -80,7 +83,7 @@ const FleetDetailsEvents = ({ fleetName }: { fleetName: string }) => {
         >
           <ul className={styles.fleetEventsList}>
             {events.map(event => (
-              <li key={event.metadata.name} className={styles.fleetEventItem}>
+              <li key={event.id} className={styles.fleetEventItem}>
                 <FleetEventRow event={event} />
               </li>
             ))}

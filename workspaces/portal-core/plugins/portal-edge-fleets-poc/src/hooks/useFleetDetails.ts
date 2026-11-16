@@ -16,6 +16,7 @@ const useFleetDetails = (fleetName: string) => {
 
   return useFetchPeriodically(fetchFleetDetails, {
     enabled: Boolean(fleetName),
+    mapper: fleetDetailsMapper,
   });
 };
 
