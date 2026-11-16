@@ -14,9 +14,11 @@ import {
   ImageApplicationProviderSpec,
 } from '@ansible/portal-edge-fleets-poc-common';
 import { CatalogItem } from '@ansible/portal-edge-fleets-poc-common/alpha';
+import DefaultEmptyState from '../common/DefaultEmptyState';
+import ViewField from '../common/ViewField';
+
 import { getRhemHomeUrl } from '../../utils/routes';
 import { getNextCatalogItemUpdate } from '../../utils/catalogItems';
-import DefaultEmptyState from '../common/DefaultEmptyState';
 
 import styles from './FleetDetailsApplications.module.css';
 
@@ -73,20 +75,6 @@ const AppRowSummary = ({
       >
         {isCatalogApp ? 'Software Catalog' : 'Manual'}
       </div>
-    </div>
-  );
-};
-
-const AppDetailField = ({
-  label,
-  children,
-}: React.PropsWithChildren<{ label: string }>) => {
-  return (
-    <div style={{ display: 'contents' }}>
-      <Text variant="body-small" color="secondary">
-        {label}
-      </Text>
-      <div>{children}</div>
     </div>
   );
 };
@@ -156,23 +144,23 @@ const CatalogAppDetails = ({
         </Text>
       )}
       <div className={styles.fleetAppDetailsGrid}>
-        <AppDetailField label="Version">
+        <ViewField label="Version">
           <Text weight="bold" variant="body-small">
             {appCatalogItemRef.version}
           </Text>
-        </AppDetailField>
+        </ViewField>
         {appCatalogItemRef.channel && (
-          <AppDetailField label="Channel">
+          <ViewField label="Channel">
             <Text variant="body-small">{appCatalogItemRef.channel}</Text>
-          </AppDetailField>
+          </ViewField>
         )}
         {appCatalogItem && (
-          <AppDetailField label="State">
+          <ViewField label="State">
             <AppCatalogItemStatus
               appCatalogItemRef={appCatalogItemRef}
               catalogItem={appCatalogItem}
             />
-          </AppDetailField>
+          </ViewField>
         )}
       </div>
     </>
@@ -185,13 +173,13 @@ const ManualAppDetails = ({ app }: { app: ApplicationProviderSpec }) => {
     <>
       <div>
         {image ? (
-          <AppDetailField label="Image">
+          <ViewField label="Image">
             <Text variant="body-small">{image}</Text>
-          </AppDetailField>
+          </ViewField>
         ) : (
-          <AppDetailField label="Content">
+          <ViewField label="Content">
             <Text variant="body-small">Application is defined inline</Text>
-          </AppDetailField>
+          </ViewField>
         )}
       </div>
       <Text

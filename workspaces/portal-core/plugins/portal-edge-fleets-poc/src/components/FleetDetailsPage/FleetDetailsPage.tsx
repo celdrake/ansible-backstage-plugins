@@ -45,6 +45,7 @@ import {
   getOsSourceLabel,
   OsType,
 } from '../../utils/os';
+import ViewField from '../common/ViewField';
 import FleetUpdatePolicyDetails from '../common/FleetUpdatePolicyDetails';
 import FleetDetailsCardHeader from './FleetDetailsCardHeader';
 import FleetUpdateStatusDetail from './FleetUpdateStatusDetail';
@@ -75,26 +76,6 @@ const FleetMaintenanceWindow = ({
     <FleetUpdatePolicyDetails updatePolicy={updatePolicy} asSeparateBlocks />
   );
 };
-
-// CELIA-WIP: what's the purpose of this component and does it name make sense?
-const SomeField = ({
-  label,
-  children,
-}: React.PropsWithChildren<{ label: string }>) => {
-  return (
-    <div className={styles.fleetOsExtraField}>
-      <Text
-        variant="body-small"
-        color="secondary"
-        className={styles.fleetOsExtraFieldLabel}
-      >
-        {label}
-      </Text>
-      <div className={styles.fleetOsExtraFieldValue}>{children}</div>
-    </div>
-  );
-};
-
 // CELIA-WIP: Check overall layout and responsiveness
 
 const FleetOsDetails = ({
@@ -149,20 +130,20 @@ const FleetOsDetails = ({
         )}
       </div>
       <div className={styles.fleetOsExtraSection}>
-        <SomeField label="Source">
+        <ViewField label="Source">
           <Text weight="bold">{getOsSourceLabel(osMode)}</Text>
-        </SomeField>
+        </ViewField>
         {nextVersion && (
-          <SomeField label="Available">
+          <ViewField label="Available">
             <Text weight="bold">{nextVersion}</Text>
-          </SomeField>
+          </ViewField>
         )}
         {osSpec?.image && (
-          <SomeField label="Updates">
+          <ViewField label="Updates">
             <Text color="secondary">
               Portal cannot change a manual OS image
             </Text>
-          </SomeField>
+          </ViewField>
         )}
       </div>
       <Text

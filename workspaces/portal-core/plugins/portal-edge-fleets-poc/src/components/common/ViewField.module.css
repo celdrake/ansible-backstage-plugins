@@ -1,0 +1,11 @@
+.viewField {
+  display: contents;
+}
+
+.viewFieldLabel {
+  margin: 0;
+}
+
+.viewFieldValue {
+  min-width: 0;
+}
