@@ -49,6 +49,8 @@ const buildFleetEventsFieldSelector = (
   ].join(',');
 };
 
+const DEFAULT_INTERVAL_MS = 60_000;
+
 /**
  * Loads the events of a fleet, restricted to the desired event types.
  * Refreshes periodically like the rest of the fleet detail data.
@@ -57,7 +59,6 @@ const useFleetEvents = ({
   fleetName,
   eventType,
   limit,
-  intervalMs,
 }: UseFleetEventsOptions): FleetEventsState => {
   const flightctlFetch = useFlightCtlApiFetch();
   const hasFleetName = fleetName.length > 0;
@@ -70,9 +71,7 @@ const useFleetEvents = ({
         buildFleetEventsFieldSelector(fleetName, eventType),
       );
 
-      if (limit !== undefined) {
-        query.set('limit', String(limit));
-      }
+      query.set('limit', String(limit || '500'));
 
       const eventList = await flightctlFetch<EventList>(
         `/events?${query.toString()}`,
@@ -85,7 +84,7 @@ const useFleetEvents = ({
 
   const periodicState = useFetchPeriodically(fetchEvents, {
     enabled: hasFleetName,
-    intervalMs,
+    intervalMs: DEFAULT_INTERVAL_MS,
   });
 
   const { data, isLoading, isUpdating, error, refetch } = periodicState;

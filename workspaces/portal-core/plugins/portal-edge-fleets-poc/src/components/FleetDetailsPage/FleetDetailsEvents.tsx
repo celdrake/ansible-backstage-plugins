@@ -1,14 +1,10 @@
 import React from 'react';
-import { Select, Text } from '@backstage/ui';
-import useFleetEvents, { EventTypeFilter } from '../../hooks/useFleetEvents';
+import { Flex, Select, Text } from '@backstage/ui';
+import { RiInformationLine } from '@remixicon/react';
 
-const fakeStyles = {
-  eventToolbar: 'event-toolbar',
-  eventTypeSelect: 'event-type-select',
-  eventsUpdatedLabel: 'events-updated-label',
-  eventList: 'event-list',
-  eventScroll: 'event-scroll',
-};
+import { Event } from '@ansible/portal-edge-fleets-poc-common';
+import useFleetEvents, { EventTypeFilter } from '../../hooks/useFleetEvents';
+import styles from './FleetDetailsEvents.module.css';
 
 type EventTypeFilterOption = {
   id: EventTypeFilter | 'all';
@@ -25,6 +21,26 @@ const EVENT_TYPE_FILTER_OPTIONS: Array<EventTypeFilterOption> = [
   { id: 'FleetRolloutCompleted', label: 'Fleet rollout completed' },
 ];
 
+// CELIA WIP FORMAT TIME
+const FleetEventRow = ({ event }: { event: Event }) => {
+  return (
+    <Flex gap="2" align="start">
+      <RiInformationLine
+        className={styles.fleetEventIcon}
+        aria-hidden
+        size={18}
+      />
+      <Flex direction="column" gap="1" className={styles.fleetEventItemBody}>
+        <Text weight="bold">{event.reason}</Text>
+        <Text variant="body-small">{event.message}</Text>
+        <Text variant="body-small" color="secondary">
+          {event.metadata.creationTimestamp}
+        </Text>
+      </Flex>
+    </Flex>
+  );
+};
+
 const FleetDetailsEvents = ({ fleetName }: { fleetName: string }) => {
   const [eventTypeFilter, setEventTypeFilter] =
     React.useState<EventTypeFilterOption['id']>('all');
@@ -35,9 +51,9 @@ const FleetDetailsEvents = ({ fleetName }: { fleetName: string }) => {
 
   return (
     <>
-      <div className={fakeStyles.eventToolbar}>
+      <div className={styles.fleetEventToolbar}>
         <Select
-          className={fakeStyles.eventTypeSelect}
+          className={styles.fleetEventTypeSelect}
           aria-label="Filter events by type"
           value={eventTypeFilter}
           onChange={key => {
@@ -57,20 +73,15 @@ const FleetDetailsEvents = ({ fleetName }: { fleetName: string }) => {
         </Text>
       ) : (
         <div
-          className={fakeStyles.eventScroll}
+          className={styles.fleetEventsScroll}
           tabIndex={0}
           role="region"
           aria-label="Fleet events"
         >
-          <ul className={fakeStyles.eventList}>
+          <ul className={styles.fleetEventsList}>
             {events.map(event => (
-              <li
-                key={
-                  event.metadata.name ??
-                  `${event.reason}-${event.metadata.creationTimestamp}`
-                }
-              >
-                {event.message}
+              <li key={event.metadata.name} className={styles.fleetEventItem}>
+                <FleetEventRow event={event} />
               </li>
             ))}
           </ul>
