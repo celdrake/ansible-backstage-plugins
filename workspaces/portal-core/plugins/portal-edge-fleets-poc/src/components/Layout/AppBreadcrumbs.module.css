@@ -26,7 +26,7 @@
 }
 
 .breadcrumbLink {
-  color: var(--bui-fg-link);
+  color: var(--bui-fg-info) !important;
   text-decoration: none;
 }
 

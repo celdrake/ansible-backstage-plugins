@@ -33,7 +33,7 @@
   border-bottom: 1px solid var(--bui-border);
 }
 
-.fleetEventItem:first-child {
+.fleetEventItem:first-of-type {
   padding-top: 0;
 }
 

@@ -8,15 +8,6 @@ export type BreadcrumbItem = {
   href?: string;
 };
 
-// CELIA-WIP: styles
-/*
-const styles = {
-  breadcrumbItem: 'fake-breadcrumb-item',
-  breadcrumbSep: 'fake-breadcrumb-sep',
-  breadcrumbCurrent: 'fake-breadcrumb-current',
-  breadcrumbLink: 'fake-breadcrumb-link',
-};
-*/
 const AppBreadcrumbs = ({ items }: { items: BreadcrumbItem[] | undefined }) => {
   if (!items || items.length === 0) {
     return null;

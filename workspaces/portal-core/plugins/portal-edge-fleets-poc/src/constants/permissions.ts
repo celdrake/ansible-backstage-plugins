@@ -13,18 +13,19 @@ export enum VERB {
   UPDATE = 'update',
 }
 
+export const listFleetsPermission = { kind: RESOURCE.FLEET, verb: VERB.LIST };
+
 export const viewFleetDetailsPermission = {
   kind: RESOURCE.FLEET,
   verb: VERB.GET,
 };
 
-export const listFleetsPermission = { kind: RESOURCE.FLEET, verb: VERB.LIST };
-
-export const updateFleetDetailsPermission = {
+export const updateFleetPermission = {
   kind: RESOURCE.FLEET,
   verb: VERB.PATCH,
 };
-export const viewCatalogItemsPermission = {
+
+export const listwCatalogItemsPermission = {
   kind: RESOURCE.CATALOG_ITEM,
-  verb: VERB.GET,
+  verb: VERB.LIST,
 };

@@ -11,7 +11,13 @@ import DescriptionList, { DescriptionListItem } from './DescriptionList';
 
 import styles from './FleetUpdatePolicyDetails.module.css';
 
-const UpdateScheduleDetails = ({ schedule }: { schedule: UpdateSchedule }) => {
+const UpdateScheduleDetails = ({
+  schedule,
+  canUpdateFleet,
+}: {
+  schedule: UpdateSchedule;
+  canUpdateFleet: boolean;
+}) => {
   const scheduleParts = extractUpdateScheduleParts(schedule);
   if (!scheduleParts) {
     return (
@@ -24,8 +30,9 @@ const UpdateScheduleDetails = ({ schedule }: { schedule: UpdateSchedule }) => {
           </code>
         </Text>
         <Text variant="body-small" color="secondary">
-          This expression can't be summarized here. Open Edge Manager for full
-          details and edits.
+          {canUpdateFleet
+            ? "This expression can't be summarized here. Open Edge Manager for full details and edits."
+            : "This expression can't be summarized here. Ask an administrator for full details and edits."}
         </Text>
       </Flex>
     );
@@ -66,9 +73,11 @@ const UpdateScheduleDetails = ({ schedule }: { schedule: UpdateSchedule }) => {
 const FleetUpdatePolicyDetails = ({
   updatePolicy,
   asSeparateBlocks: asSeparateBlocks = false,
+  canUpdateFleet,
 }: {
   updatePolicy: DeviceUpdatePolicySpec;
   asSeparateBlocks?: boolean;
+  canUpdateFleet: boolean;
 }) => {
   const hasSamePolicies = hasSameDownloadAndInstallSchedules(updatePolicy);
   const showInstallSchedule = updatePolicy?.updateSchedule && !hasSamePolicies;
@@ -88,7 +97,10 @@ const FleetUpdatePolicyDetails = ({
           <Text weight="bold" variant="body-small">
             {hasSamePolicies ? 'Download and install' : 'Download'}
           </Text>
-          <UpdateScheduleDetails schedule={updatePolicy.downloadSchedule} />
+          <UpdateScheduleDetails
+            schedule={updatePolicy.downloadSchedule}
+            canUpdateFleet={canUpdateFleet}
+          />
         </div>
       )}
       {showInstallSchedule && !asSeparateBlocks && (
@@ -103,7 +115,10 @@ const FleetUpdatePolicyDetails = ({
           <Text weight="bold" variant="body-small">
             Install
           </Text>
-          <UpdateScheduleDetails schedule={updatePolicy.updateSchedule} />
+          <UpdateScheduleDetails
+            schedule={updatePolicy.updateSchedule}
+            canUpdateFleet={canUpdateFleet}
+          />
         </div>
       )}
     </Flex>

@@ -14,10 +14,12 @@ import {
   ImageApplicationProviderSpec,
 } from '@ansible/portal-edge-fleets-poc-common';
 import { CatalogItem } from '@ansible/portal-edge-fleets-poc-common/alpha';
-import DefaultEmptyState from '../common/DefaultEmptyState';
-import ViewField from '../common/ViewField';
+import { updateFleetPermission } from '../../constants/permissions';
+import { useUserPermissions } from '../../hooks/useUserPermissions';
 import { getRhemHomeUrl } from '../../utils/routes';
 import { getNextCatalogItemUpdate } from '../../utils/catalogItems';
+import DefaultEmptyState from '../common/DefaultEmptyState';
+import ViewField from '../common/ViewField';
 
 import styles from './FleetDetailsApplications.module.css';
 
@@ -169,26 +171,17 @@ const CatalogAppDetails = ({
 const ManualAppDetails = ({ app }: { app: ApplicationProviderSpec }) => {
   const image = isManualImageApp(app) ? app.image : undefined;
   return (
-    <>
-      <div>
-        {image ? (
-          <ViewField label="Image">
-            <Text variant="body-small">{image}</Text>
-          </ViewField>
-        ) : (
-          <ViewField label="Content">
-            <Text variant="body-small">Application is defined inline</Text>
-          </ViewField>
-        )}
-      </div>
-      <Text
-        variant="body-small"
-        color="secondary"
-        className={styles.fleetApplicationsManualNote}
-      >
-        Manual applications don't report version or channel.
-      </Text>
-    </>
+    <div>
+      {image ? (
+        <ViewField label="Image">
+          <code className={styles.fleetApplicationsManualOsImage}>{image}</code>
+        </ViewField>
+      ) : (
+        <ViewField label="Content">
+          <Text variant="body-small">Application is defined inline</Text>
+        </ViewField>
+      )}
+    </div>
   );
 };
 
@@ -264,27 +257,42 @@ const FleetDetailsApplications = ({
   apps: ApplicationProviderSpec[];
   catalogItems: CatalogItem[];
 }) => {
+  const { checkPermissions } = useUserPermissions();
+  const [canUpdateFleet] = checkPermissions([updateFleetPermission]);
+
   if (apps.length === 0) {
     return (
       <DefaultEmptyState
         icon={<RiApps2Line size={28} />}
         title="No applications"
-        description="Add catalog or manual applications to this fleet in Edge Manager. Portal focuses on OS updates."
-        actionLabel="Manage apps in Edge Manager"
+        description={
+          canUpdateFleet
+            ? 'Add catalog or manual applications to this fleet in Edge Manager. Portal focuses on OS updates.'
+            : 'Applications are added in Edge Manager. Portal focuses on OS updates. Ask an administrator if apps should be added to this fleet.'
+        }
+        actionLabel={canUpdateFleet ? 'Manage apps in Edge Manager' : ''}
       />
     );
   }
 
   const hasManualApps = apps.some(app => !isCatalogRefSpecApp(app));
+  let mainText;
+  if (hasManualApps) {
+    mainText =
+      'Catalog apps show version and channel when available. Manual apps are managed in Edge Manager.';
+  } else if (canUpdateFleet) {
+    mainText = 'Portal focuses on OS updates. Manage apps in Edge Manager.';
+  } else {
+    mainText =
+      'Portal focuses on OS updates. Application changes are managed in Edge Manager.';
+  }
 
   return (
     <Flex direction="column" gap="4">
       <FleetApplicationsList apps={apps} catalogItems={catalogItems} />
       <Flex align="center" justify="between" gap="4">
         <Text variant="body-small" color="secondary">
-          {hasManualApps
-            ? 'Catalog apps show version and channel when available. Manual apps are managed in Edge Manager.'
-            : 'Portal focuses on OS updates. Manage apps in Edge Manager.'}
+          {mainText}
         </Text>
         <ButtonLink
           variant="secondary"

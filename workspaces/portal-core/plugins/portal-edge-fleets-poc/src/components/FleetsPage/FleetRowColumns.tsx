@@ -24,10 +24,12 @@ import {
   getOsCatalogItemDisplayText,
   getOsCatalogRefDisplayText,
 } from '../../utils/catalogItems';
-import { getFleetDetailsPath } from '../../utils/routes';
-import { getFleetLink } from '../../utils/rhem';
+import { UpdateAvailableBadge } from '../common/Badges';
+import { useUserPermissions } from '../../hooks/useUserPermissions';
+import { updateFleetPermission } from '../../constants/permissions';
+import { getRhemFleetUrl } from '../../utils/routes';
 import { FleetCatalogItemsState } from './types';
-import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
+import { getFleetStatusItem } from './FleetStatus';
 
 import styles from './FleetsPage.module.css';
 
@@ -42,9 +44,11 @@ const FleetOsText = ({ text }: { text: string }) => {
 const FleetCatalogOs = ({
   osItemRef,
   catalogItemState,
+  isFleetEditable,
 }: {
   osItemRef: CatalogItemRefSpec;
   catalogItemState: FleetCatalogItemsState;
+  isFleetEditable: boolean;
 }) => {
   // CELIA-WIP: Discuss the UX for the loading and error states.
   if (catalogItemState.status === 'loading') {
@@ -64,9 +68,10 @@ const FleetCatalogOs = ({
   }
 
   const currentOs = getOsCatalogItemDisplayText(catalogItem, osItemRef.version);
-  if (!versionToUpdate) {
+  if (!versionToUpdate || !isFleetEditable) {
     return <FleetOsText text={`Target: ${currentOs}`} />;
   }
+
   return (
     <div className={styles.fleetsPageStackLayout}>
       <FleetOsText text={`Target: ${currentOs}`} />
@@ -94,10 +99,13 @@ export const FleetOs = ({
   } else if (!osSpec?.catalogItemRef) {
     return <FleetOsText text="No OS defined" />;
   }
+  const fleetStatusItem = getFleetStatusItem(fleet.status);
+  const canFleetBeUpdated = fleetStatusItem.id === 'Valid';
   return (
     <FleetCatalogOs
       osItemRef={osSpec.catalogItemRef}
       catalogItemState={catalogItemState}
+      canFleetBeUpdated={canFleetBeUpdated}
     />
   );
 };
@@ -133,7 +141,7 @@ export const FleetActions = ({
 }) => {
   const fleetName = fleet.metadata.name as string;
   const { checkPermissions } = useUserPermissions();
-  const [canEditFleet] = checkPermissions([updateFleetDetailsPermission]);
+  const [canEditFleet] = checkPermissions([updateFleetPermission]);
   const handleOsUpdate = React.useCallback(
     (
       catalogItem: CatalogItem | undefined,
@@ -185,13 +193,11 @@ export const FleetActions = ({
           <ButtonIcon
             variant="secondary"
             size="small"
-            aria-label={`Actions for ${fleet.metadata.name}`}
+            aria-label={`Actions for ${fleetName}`}
             icon={<RiMore2Line aria-hidden size={20} />}
           />
           <Menu className={styles.fleetListActionsMenu}>
-            <MenuItem href={getFleetDetailsPath(fleet.metadata.name as string)}>
-              Open fleet
-            </MenuItem>
+            <MenuItem href={getRhemFleetUrl(fleetName)}>Open fleet</MenuItem>
             {canUpdate && (
               <MenuItem
                 onAction={() =>
@@ -206,7 +212,7 @@ export const FleetActions = ({
             )}
             {hasRhemLink && (
               <MenuItem
-                href={getFleetLink(fleet)}
+                href={getRhemFleetUrl(fleetName)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.fleetActionsMenuItem}

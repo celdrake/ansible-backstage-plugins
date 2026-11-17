@@ -7,6 +7,7 @@ import {
   CellText,
   ColumnConfig,
   Flex,
+  Link,
   SearchField,
   Table,
   Text,
@@ -96,7 +97,18 @@ const FleetsPageContent = ({
             return <CellText title={fleetName} />;
           }
           return (
-            <CellText title={fleetName} href={getFleetDetailsPath(fleetName)} />
+            <Cell>
+              <Link
+                href={getFleetDetailsPath(fleetName)}
+                variant="body-medium"
+                color="info"
+                truncate
+                title={fleetName}
+                className={styles.fleetNameLink}
+              >
+                {fleetName}
+              </Link>
+            </Cell>
           );
         },
       },

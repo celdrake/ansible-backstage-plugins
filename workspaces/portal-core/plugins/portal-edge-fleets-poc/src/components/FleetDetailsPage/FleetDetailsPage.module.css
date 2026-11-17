@@ -73,18 +73,6 @@
   align-items: center;
 }
 
-.fleetOsExtraField {
-  display: contents;
-}
-
-.fleetOsExtraFieldLabel {
-  margin: 0;
-}
-
-.fleetOsExtraFieldValue {
-  min-width: 0;
-}
-
 .fleetOsSourceNote {
   margin-top: auto;
   padding-top: var(--bui-space-3);

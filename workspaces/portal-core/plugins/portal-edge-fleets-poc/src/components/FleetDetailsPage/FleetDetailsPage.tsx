@@ -27,20 +27,20 @@ import {
 import useFleetDetails from '../../hooks/useFleetDetails';
 import { getFleetsPath, getRhemHomeUrl } from '../../utils/routes';
 import {
-  getNextCatalogItemUpdate,
   getOsCatalogItem,
   getOsCatalogItemDisplayText,
   getOsDisplayText,
 } from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
-import useFleetUpdate from '../../hooks/useFleetUpdate';
-import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
+import useFleetUpdate, {
+  type UseFleetUpdateState,
+} from '../../hooks/useFleetUpdate';
 import {
   AccessDenied,
   useUserPermissions,
 } from '../../hooks/useUserPermissions';
-import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
-import StatusBadge from '../common/StatusBadge';
+import { UpdateAvailableBadge, ViewOnlyBadge } from '../common/Badges';
+import { StatusBadge } from '../common/Badges';
 import DefaultEmptyState from '../common/DefaultEmptyState';
 import AppLayout from '../Layout/AppLayout';
 import AppHeader from '../Layout/AppHeader';
@@ -55,7 +55,7 @@ import {
   OsType,
 } from '../../utils/os';
 import {
-  updateFleetDetailsPermission,
+  updateFleetPermission,
   viewFleetDetailsPermission,
 } from '../../constants/permissions';
 import ViewField from '../common/ViewField';
@@ -69,47 +69,76 @@ import styles from './FleetDetailsPage.module.css';
 
 const FleetMaintenanceWindow = ({
   updatePolicy,
+  canUpdateFleet,
 }: {
   updatePolicy: DeviceUpdatePolicySpec | undefined;
+  canUpdateFleet: boolean;
 }) => {
   const updateSchedule = updatePolicy?.updateSchedule;
   const downloadSchedule = updatePolicy?.downloadSchedule;
   const schedule = updateSchedule || downloadSchedule;
+  let text;
+  if (canUpdateFleet) {
+    text =
+      'Devices receive updates as soon as they are available. Set a window in Edge Manager to control download and install timing.';
+  } else {
+    text =
+      'Devices receive updates as soon as they are available. Ask an administrator to set a window in Edge Manager if download and install timing should be controlled.';
+  }
   if (!schedule) {
     return (
       <DefaultEmptyState
         icon={<RiSettings3Line size={28} />}
         title="No maintenance window"
         description="Devices receive updates as soon as they are available. Set a window in Edge Manager to control download and install timing."
-        actionLabel="Set window in Edge Manager"
+        actionLabel={canUpdateFleet ? 'Set window in Edge Manager' : ''}
       />
     );
   }
 
   return (
-    <FleetUpdatePolicyDetails updatePolicy={updatePolicy} asSeparateBlocks />
+    <FleetUpdatePolicyDetails
+      updatePolicy={updatePolicy}
+      canUpdateFleet={canUpdateFleet}
+      asSeparateBlocks
+    />
   );
 };
 // CELIA-WIP: Check overall layout and responsiveness
+
+type FleetOsDetailsProps = {
+  osSpec: DeviceOsSpec | undefined;
+  catalogItem: CatalogItem | undefined;
+  // Whether the OS catalogItem has an update available
+  versionToUpdate: CatalogItemVersion | undefined;
+  // Whether the fleet status allows updating the OS (this is a UX constraint, not one mandated by RHEM's API)
+  isFleetEditable: boolean;
+  // Whether the user has permission to update the fleet
+  canUpdateFleet: boolean;
+};
 
 const FleetOsDetails = ({
   osSpec,
   catalogItem,
   versionToUpdate,
-  canUpdate,
-}: {
-  osSpec: DeviceOsSpec | undefined;
-  catalogItem: CatalogItem | undefined;
-  versionToUpdate: CatalogItemVersion | undefined;
-  canUpdate: boolean;
-}) => {
+  isFleetEditable,
+  canUpdateFleet,
+}: FleetOsDetailsProps) => {
   if (!osSpec?.catalogItemRef && !osSpec?.image) {
+    let text;
+    if (canUpdateFleet) {
+      text =
+        'Ask an administrator to assign a Software Catalog OS in Edge Manager to unlock Portal OS targets and rollouts.';
+    } else {
+      text =
+        'Assign a Software Catalog OS in Edge Manager to unlock Portal OS targets and rollouts.';
+    }
     return (
       <DefaultEmptyState
         icon={<RiHardDrive3Line size={28} />}
         title="No OS defined"
-        description="Assign a Software Catalog OS in Edge Manager to unlock Portal OS targets and rollouts."
-        actionLabel="Assign OS in Edge Manager"
+        description={text}
+        actionLabel={canUpdateFleet ? 'Assign OS in Edge Manager' : ''}
       />
     );
   }
@@ -138,7 +167,7 @@ const FleetOsDetails = ({
           {currentVersion}
         </Text>
 
-        {versionToUpdate && canUpdate && <UpdateAvailableBadge />}
+        {isFleetEditable && versionToUpdate && <UpdateAvailableBadge />}
         {osMode === 'catalog' && !versionToUpdate && (
           <StatusBadge text="Up to date" />
         )}
@@ -213,7 +242,7 @@ const FleetDetailsPageContent = ({
 }) => {
   const fleetName = fleet.metadata.name as string;
   const { checkPermissions } = useUserPermissions();
-  const [canUpdateFleet] = checkPermissions([updateFleetDetailsPermission]);
+  const [canUpdateFleet] = checkPermissions([updateFleetPermission]);
   const osSpec = fleet.spec.template.spec.os;
   const osCatalogRef = osSpec?.catalogItemRef;
 
@@ -237,7 +266,6 @@ const FleetDetailsPageContent = ({
     : { catalogItem: undefined, versionToUpdate: undefined };
 
   // CELIA-WIP: Design wants to block updates if the fleet is invalid
-  const hasUpdates = versionToUpdate !== undefined;
   const updatePolicy = fleet.spec.template.spec.updatePolicy;
   const hasUpdatePolicy = Boolean(
     updatePolicy?.updateSchedule || updatePolicy?.downloadSchedule,
@@ -246,14 +274,14 @@ const FleetDetailsPageContent = ({
   const apps = fleet.spec.template.spec.applications || [];
 
   const fleetStatusItem = getFleetStatusItem(fleet.status);
-  const isUpdatePossible = hasUpdates && fleetStatusItem.id === 'Valid';
+  const isFleetEditable = fleetStatusItem.id === 'Valid';
   const nextVersionText =
     catalogItem && versionToUpdate
       ? getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version)
       : undefined;
   return (
     <Flex direction="column" gap="6">
-      {isUpdatePossible && canUpdateFleet && (
+      {isFleetEditable && versionToUpdate && canUpdateFleet && (
         <Alert
           status="info"
           title="OS update ready"
@@ -281,7 +309,7 @@ const FleetDetailsPageContent = ({
           }
         />
       )}
-      {isUpdatePossible && !canUpdateFleet && (
+      {isFleetEditable && !canUpdateFleet && (
         <Alert
           status="info"
           title="OS update available"
@@ -299,7 +327,8 @@ const FleetDetailsPageContent = ({
               osSpec={osSpec}
               catalogItem={catalogItem}
               versionToUpdate={versionToUpdate}
-              canUpdate={isUpdatePossible}
+              isFleetEditable={isFleetEditable}
+              canUpdateFleet={canUpdateFleet}
             />
           </CardBody>
         </Card>
@@ -313,7 +342,10 @@ const FleetDetailsPageContent = ({
         <Card className={styles.fleetDetailsCard}>
           <FleetDetailsCardHeader title="Maintenance window" />
           <CardBody className={styles.fleetDetailsCardBody}>
-            <FleetMaintenanceWindow updatePolicy={updatePolicy} />
+            <FleetMaintenanceWindow
+              updatePolicy={updatePolicy}
+              canUpdateFleet={canUpdateFleet}
+            />
           </CardBody>
         </Card>
       </div>
@@ -343,7 +375,11 @@ const FleetDetailsPageContent = ({
   );
 };
 
-const FleetDetailsPageBody = () => {
+const FleetDetailsPageBody = ({
+  canUpdateFleet,
+}: {
+  canUpdateFleet: boolean;
+}) => {
   const { fleetName = '' } = useParams<{ fleetName: string }>();
   const { data: fleet, isLoading, error, refetch } = useFleetDetails(fleetName);
   const fleetUpdateState = useFleetUpdate(refetch);
@@ -367,6 +403,14 @@ const FleetDetailsPageBody = () => {
               label: 'Status',
               value: <FleetStatus fleetStatus={fleet?.status} />,
             },
+            ...(!canUpdateFleet
+              ? [
+                  {
+                    label: '',
+                    value: <ViewOnlyBadge />,
+                  },
+                ]
+              : []),
           ]}
         />
       }
@@ -397,11 +441,14 @@ const FleetDetailsPage = () => {
   if (loadingPermissions) {
     return <Progress />;
   }
-  const [canViewFleets] = checkPermissions([viewFleetDetailsPermission]);
-  if (!canViewFleets) {
+  const [canViewFleetDetails, canUpdateFleet] = checkPermissions([
+    viewFleetDetailsPermission,
+    updateFleetPermission,
+  ]);
+  if (!canViewFleetDetails) {
     return <AccessDenied />;
   }
-  return <FleetDetailsPageBody />;
+  return <FleetDetailsPageBody canUpdateFleet={canUpdateFleet} />;
 };
 
 export default FleetDetailsPage;

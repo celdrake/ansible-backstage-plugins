@@ -41,7 +41,7 @@ export const getFleetStatusItem = (
   ) {
     return {
       id: 'SyncPending',
-      level: 'info',
+      level: 'warning',
       label: 'Sync pending',
     };
   } else if (validCondition.status === ConditionStatus.ConditionStatusFalse) {

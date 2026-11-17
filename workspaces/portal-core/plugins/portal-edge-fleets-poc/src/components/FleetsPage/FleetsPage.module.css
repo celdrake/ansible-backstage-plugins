@@ -43,3 +43,13 @@
   min-width: 0;
   max-width: 20rem;
 }
+
+.fleetNameLink {
+  color: var(--bui-fg-info);
+  text-decoration: none;
+  max-width: 100%;
+}
+
+.fleetNameLink:hover {
+  text-decoration: underline;
+}
