@@ -11,6 +11,7 @@ import {
   Table,
   Text,
 } from '@backstage/ui';
+import { Progress } from '@backstage/core-components';
 
 import type {
   CatalogItem,
@@ -24,6 +25,14 @@ import useFleetList, {
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import useFleetsCount from '../../hooks/useFleetsCount';
+import {
+  AccessDenied,
+  useUserPermissions,
+} from '../../hooks/useUserPermissions';
+import {
+  listFleetsPermission,
+  viewFleetDetailsPermission,
+} from '../../constants/permissions';
 import { getFleetDetailsPath } from '../../utils/routes';
 import AppLayout from '../Layout/AppLayout';
 import AppHeader from '../Layout/AppHeader';
@@ -53,6 +62,7 @@ const FleetsTableEmptyState = ({ hasSearch }: { hasSearch: boolean }) => {
 const FleetsPageContent = ({
   fleetListState,
   onUpdateFleet,
+  canViewFleetDetails,
 }: {
   fleetListState: FleetListState;
   onUpdateFleet: (
@@ -60,6 +70,7 @@ const FleetsPageContent = ({
     osCatalogItem: CatalogItem,
     targetVersion: CatalogItemVersion,
   ) => void;
+  canViewFleetDetails: boolean;
 }) => {
   const {
     tableProps,
@@ -73,7 +84,6 @@ const FleetsPageContent = ({
   const fleetNames = fleets?.map(fleet => fleet.metadata.name as string);
   const catalogItemsState = useFleetCatalogItems(fleetNames ?? []);
 
-  // CELIA-WIP: talk to Paola about how to render the different loading states.
   const columns = React.useMemo<ColumnConfig<EdgeFleet>[]>(
     () => [
       {
@@ -82,6 +92,9 @@ const FleetsPageContent = ({
         isRowHeader: true,
         cell: fleet => {
           const fleetName = fleet.metadata.name as string;
+          if (!canViewFleetDetails) {
+            return <CellText title={fleetName} />;
+          }
           return (
             <CellText title={fleetName} href={getFleetDetailsPath(fleetName)} />
           );
@@ -180,7 +193,11 @@ const FleetsPageContent = ({
   );
 };
 
-const FleetsPage = () => {
+const FleetsPageBody = ({
+  canViewFleetDetails,
+}: {
+  canViewFleetDetails: boolean;
+}) => {
   const fleetListState = useFleetList();
   const fleetUpdateState = useFleetUpdate(fleetListState.refetch);
 
@@ -205,10 +222,28 @@ const FleetsPage = () => {
       <FleetsPageContent
         fleetListState={fleetListState}
         onUpdateFleet={fleetUpdateState.openFleetUpdate}
+        canViewFleetDetails={canViewFleetDetails}
       />
       <FleetOsUpdateDialog fleetUpdateState={fleetUpdateState} />
     </AppLayout>
   );
+};
+
+const FleetsPage = () => {
+  const { loading: loadingPermissions, checkPermissions } =
+    useUserPermissions();
+
+  if (loadingPermissions) {
+    return <Progress />;
+  }
+  const [canListFleets, canViewFleetDetails] = checkPermissions([
+    listFleetsPermission,
+    viewFleetDetailsPermission,
+  ]);
+  if (!canListFleets) {
+    return <AccessDenied />;
+  }
+  return <FleetsPageBody canViewFleetDetails={canViewFleetDetails} />;
 };
 
 export default FleetsPage;

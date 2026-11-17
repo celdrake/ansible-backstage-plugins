@@ -175,6 +175,15 @@ async function fetchDeviceSummary(
   return flightctlApiCall(url, options);
 }
 
+// Retrieves the permissions of the authenticated user.
+async function fetchPermissions(
+  options: FlightctlRequestOptions,
+): Promise<FlightctlApiResult> {
+  const url = new URL('/api/v1/auth/permissions', options.apiBaseUrl);
+
+  return flightctlApiCall(url, options);
+}
+
 // Retrieves the catalog items associated to the given fleet names.
 async function fetchCatalogItems(
   options: FlightctlRequestOptions,
@@ -398,6 +407,10 @@ export function createFlightctlFleetsRouter(
 
   router.get('/devices', async (req, res) => {
     await proxyFlightctlRequest(req, res, options, fetchDeviceSummary);
+  });
+
+  router.get('/permissions', async (req, res) => {
+    await proxyFlightctlRequest(req, res, options, fetchPermissions);
   });
 
   router.patch(

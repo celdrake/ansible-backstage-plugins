@@ -4,7 +4,9 @@ import {
 } from '@backstage/frontend-plugin-api';
 import { compatWrapper } from '@backstage/core-compat-api';
 import RouterIcon from '@material-ui/icons/Router';
+
 import { fleetDetailsRoutePath } from './utils/routes';
+import { UserPermissionsProvider } from './hooks/useUserPermissions';
 
 import '@backstage/ui/css/styles.css';
 
@@ -22,7 +24,11 @@ export default createFrontendPlugin({
           const { default: FleetsPage } = await import(
             './components/FleetsPage/FleetsPage'
           );
-          return compatWrapper(<FleetsPage />);
+          return compatWrapper(
+            <UserPermissionsProvider>
+              <FleetsPage />
+            </UserPermissionsProvider>,
+          );
         },
       },
     }),
@@ -35,7 +41,11 @@ export default createFrontendPlugin({
           const { default: FleetDetailsPage } = await import(
             './components/FleetDetailsPage/FleetDetailsPage'
           );
-          return compatWrapper(<FleetDetailsPage />);
+          return compatWrapper(
+            <UserPermissionsProvider>
+              <FleetDetailsPage />
+            </UserPermissionsProvider>,
+          );
         },
       },
     }),

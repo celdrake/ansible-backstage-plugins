@@ -131,6 +131,9 @@ export const FleetActions = ({
     targetVersion: CatalogItemVersion,
   ) => void;
 }) => {
+  const fleetName = fleet.metadata.name as string;
+  const { checkPermissions } = useUserPermissions();
+  const [canEditFleet] = checkPermissions([updateFleetDetailsPermission]);
   const handleOsUpdate = React.useCallback(
     (
       catalogItem: CatalogItem | undefined,
@@ -156,6 +159,7 @@ export const FleetActions = ({
     : { catalogItem: undefined, versionToUpdate: undefined };
 
   const canUpdate =
+    canEditFleet &&
     catalogItemResult.catalogItem !== undefined &&
     catalogItemResult.versionToUpdate !== undefined;
 

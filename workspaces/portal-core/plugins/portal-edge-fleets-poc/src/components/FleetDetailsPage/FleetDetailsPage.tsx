@@ -26,10 +26,19 @@ import {
 } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import useFleetDetails from '../../hooks/useFleetDetails';
 import { getFleetsPath, getRhemHomeUrl } from '../../utils/routes';
-import { getOsCatalogItem, getOsDisplayText } from '../../utils/catalogItems';
+import {
+  getNextCatalogItemUpdate,
+  getOsCatalogItem,
+  getOsCatalogItemDisplayText,
+  getOsDisplayText,
+} from '../../utils/catalogItems';
 import useFleetCatalogItems from '../../hooks/useFleetCatalogItems';
 import useFleetUpdate from '../../hooks/useFleetUpdate';
 import type { UseFleetUpdateState } from '../../hooks/useFleetUpdate';
+import {
+  AccessDenied,
+  useUserPermissions,
+} from '../../hooks/useUserPermissions';
 import UpdateAvailableBadge from '../common/UpdateAvailableBadge';
 import StatusBadge from '../common/StatusBadge';
 import DefaultEmptyState from '../common/DefaultEmptyState';
@@ -45,12 +54,17 @@ import {
   getOsSourceLabel,
   OsType,
 } from '../../utils/os';
+import {
+  updateFleetDetailsPermission,
+  viewFleetDetailsPermission,
+} from '../../constants/permissions';
 import ViewField from '../common/ViewField';
 import FleetUpdatePolicyDetails from '../common/FleetUpdatePolicyDetails';
 import FleetDetailsCardHeader from './FleetDetailsCardHeader';
 import FleetUpdateStatusDetail from './FleetUpdateStatusDetail';
 import FleetDetailsApplications from './FleetDetailsApplications';
 import FleetEventsCard from './FleetEventsCard';
+
 import styles from './FleetDetailsPage.module.css';
 
 const FleetMaintenanceWindow = ({
@@ -190,8 +204,6 @@ const FleetAlert = ({ statusItem }: { statusItem: FleetStatusItem }) => {
   ) : null;
 };
 
-// CELIA-WIP: User permissions
-
 const FleetDetailsPageContent = ({
   fleet,
   fleetUpdateState,
@@ -200,6 +212,8 @@ const FleetDetailsPageContent = ({
   fleetUpdateState: UseFleetUpdateState;
 }) => {
   const fleetName = fleet.metadata.name as string;
+  const { checkPermissions } = useUserPermissions();
+  const [canUpdateFleet] = checkPermissions([updateFleetDetailsPermission]);
   const osSpec = fleet.spec.template.spec.os;
   const osCatalogRef = osSpec?.catalogItemRef;
 
@@ -232,11 +246,14 @@ const FleetDetailsPageContent = ({
   const apps = fleet.spec.template.spec.applications || [];
 
   const fleetStatusItem = getFleetStatusItem(fleet.status);
-  const canUpdate = hasUpdates && fleetStatusItem.id === 'Valid';
-
+  const isUpdatePossible = hasUpdates && fleetStatusItem.id === 'Valid';
+  const nextVersionText =
+    catalogItem && versionToUpdate
+      ? getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version)
+      : undefined;
   return (
     <Flex direction="column" gap="6">
-      {canUpdate && (
+      {isUpdatePossible && canUpdateFleet && (
         <Alert
           status="info"
           title="OS update ready"
@@ -264,6 +281,13 @@ const FleetDetailsPageContent = ({
           }
         />
       )}
+      {isUpdatePossible && !canUpdateFleet && (
+        <Alert
+          status="info"
+          title="OS update available"
+          description={`${nextVersionText} is available, but you don't have permission to update this fleet. Ask an administrator if the OS target should be changed.`}
+        />
+      )}
 
       <FleetAlert statusItem={fleetStatusItem} />
 
@@ -275,7 +299,7 @@ const FleetDetailsPageContent = ({
               osSpec={osSpec}
               catalogItem={catalogItem}
               versionToUpdate={versionToUpdate}
-              canUpdate={canUpdate}
+              canUpdate={isUpdatePossible}
             />
           </CardBody>
         </Card>
@@ -319,7 +343,7 @@ const FleetDetailsPageContent = ({
   );
 };
 
-const FleetDetailsPage = () => {
+const FleetDetailsPageBody = () => {
   const { fleetName = '' } = useParams<{ fleetName: string }>();
   const { data: fleet, isLoading, error, refetch } = useFleetDetails(fleetName);
   const fleetUpdateState = useFleetUpdate(refetch);
@@ -364,6 +388,20 @@ const FleetDetailsPage = () => {
       <FleetOsUpdateDialog fleetUpdateState={fleetUpdateState} />
     </AppLayout>
   );
+};
+
+const FleetDetailsPage = () => {
+  const { loading: loadingPermissions, checkPermissions } =
+    useUserPermissions();
+
+  if (loadingPermissions) {
+    return <Progress />;
+  }
+  const [canViewFleets] = checkPermissions([viewFleetDetailsPermission]);
+  if (!canViewFleets) {
+    return <AccessDenied />;
+  }
+  return <FleetDetailsPageBody />;
 };
 
 export default FleetDetailsPage;
