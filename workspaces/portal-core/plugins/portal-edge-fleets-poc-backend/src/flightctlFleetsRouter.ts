@@ -37,6 +37,8 @@ type FlightctlRouterOptions = {
 
 type PortalRequest = express.Request & { portalContext?: PortalContext };
 
+const organizationCache = new Map<string, Promise<string>>();
+
 type FlightctlApiResult = { status: number; body: unknown };
 
 type FleetListQuery = {
@@ -65,6 +67,7 @@ class FlightctlRouteError extends Error {
 
 const FLEET_UPDATE_OPERATION_ID = 'edge-fleets-poc.fleet.update';
 
+const MAX_CACHED_ORGANIZATIONS = 1000;
 const MAX_FLEET_NAMES_PER_SELECTOR = 100;
 const MAX_FLEET_NAME_LENGTH = 253;
 const MAX_EVENT_FIELD_SELECTOR_LENGTH = 2048;
@@ -317,6 +320,25 @@ export function pickFlightctlOrganizationId(
   return matches.length === 1 ? matches[0].metadata.name : undefined;
 }
 
+// Resolve a user's Flightctl organization once per key: later requests reuse the
+// result, so the organization cannot change mid-session.
+export function cachedOrganizationId(
+  cache: Map<string, Promise<string>>,
+  key: string,
+  resolve: () => Promise<string>,
+): Promise<string> {
+  const cached = cache.get(key);
+  if (cached) return cached;
+  if (cache.size >= MAX_CACHED_ORGANIZATIONS) {
+    const oldest = cache.keys().next().value;
+    if (oldest !== undefined) cache.delete(oldest);
+  }
+  const pending = resolve();
+  cache.set(key, pending);
+  pending.catch(() => cache.delete(key));
+  return pending;
+}
+
 async function resolveFlightctlOrganizationId(
   connection: Omit<FlightctlRequestOptions, 'organizationId'>,
   aapOrganizationId: string,
@@ -369,9 +391,10 @@ async function resolveFlightctlRequestOptions(
   };
   return {
     ...connection,
-    organizationId: await resolveFlightctlOrganizationId(
-      connection,
-      context.organizationId,
+    organizationId: await cachedOrganizationId(
+      organizationCache,
+      `${apiBaseUrl}\0${context.userEntityRef}\0${context.organizationId}`,
+      () => resolveFlightctlOrganizationId(connection, context.organizationId),
     ),
   };
 }
