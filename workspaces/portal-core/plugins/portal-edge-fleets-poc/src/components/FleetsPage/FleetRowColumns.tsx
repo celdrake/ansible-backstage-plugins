@@ -100,12 +100,11 @@ export const FleetOs = ({
     return <FleetOsText text="No OS defined" />;
   }
   const fleetStatusItem = getFleetStatusItem(fleet.status);
-  const canFleetBeUpdated = fleetStatusItem.id === 'Valid';
   return (
     <FleetCatalogOs
       osItemRef={osSpec.catalogItemRef}
       catalogItemState={catalogItemState}
-      canFleetBeUpdated={canFleetBeUpdated}
+      isFleetEditable={fleetStatusItem.id === 'Valid'}
     />
   );
 };

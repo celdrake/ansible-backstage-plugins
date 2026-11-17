@@ -275,13 +275,14 @@ const FleetDetailsPageContent = ({
 
   const fleetStatusItem = getFleetStatusItem(fleet.status);
   const isFleetEditable = fleetStatusItem.id === 'Valid';
+  const isUpdateAvailable = isFleetEditable && versionToUpdate;
   const nextVersionText =
     catalogItem && versionToUpdate
       ? getOsCatalogItemDisplayText(catalogItem, versionToUpdate.version)
       : undefined;
   return (
     <Flex direction="column" gap="6">
-      {isFleetEditable && versionToUpdate && canUpdateFleet && (
+      {isUpdateAvailable && canUpdateFleet && (
         <Alert
           status="info"
           title="OS update ready"
@@ -309,7 +310,7 @@ const FleetDetailsPageContent = ({
           }
         />
       )}
-      {isFleetEditable && !canUpdateFleet && (
+      {isUpdateAvailable && !canUpdateFleet && (
         <Alert
           status="info"
           title="OS update available"
@@ -369,6 +370,7 @@ const FleetDetailsPageContent = ({
             />
           </CardBody>
         </Card>
+
         <FleetEventsCard fleetName={fleetName} />
       </div>
     </Flex>
