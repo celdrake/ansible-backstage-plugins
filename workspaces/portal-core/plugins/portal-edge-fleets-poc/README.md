@@ -15,18 +15,21 @@ The page calls these backend API routes:
   names are accepted)
 
 All routes require a signed-in Backstage user and an AAP access token. The
-backend reads the AAP profile and organization memberships, then sends the AAP
-token to Flightctl. The temporary organization mapping allows AAP organization
-`1` to use the Flightctl organization configured below.
+Portal identity middleware resolves the user and trusted AAP organization, then
+the backend sends the AAP token to Flightctl. On each request the plugin lists
+the Flightctl organizations the user can access and matches the Portal
+organization against the Flightctl organization `externalId` (Flightctl stores
+the AAP organization name there). The matched Flightctl organization is sent as
+`org_id` on every Flightctl call. Update operations emit Portal audit events,
+and backend health is reported through the host health registry.
 
-Configure the Flightctl endpoint and organization in `app-config.local.yaml`:
+Configure the Flightctl endpoint in `app-config.local.yaml`:
 
 ```yaml
 ansible:
   edge-fleets-poc:
     flightctl:
       apiBaseUrl: https://flightctl.example.com
-      organizationId: 8093ada4-3380-4098-8391-519d7e81d732
       skipTlsVerify: false
 ```
 

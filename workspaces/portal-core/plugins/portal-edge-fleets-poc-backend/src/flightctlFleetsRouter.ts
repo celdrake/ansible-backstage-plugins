@@ -1,12 +1,23 @@
-import type { HttpAuthService } from '@backstage/backend-plugin-api';
+import type {
+  HttpAuthService,
+  LoggerService,
+  UserInfoService,
+} from '@backstage/backend-plugin-api';
 import type { Config } from '@backstage/config';
-import { AuthenticationError } from '@backstage/errors';
-import type { IAAPService } from '@ansible/backstage-rhaap-common';
-import type { PatchRequest } from '@ansible/portal-edge-fleets-poc-common';
+import { AuthenticationError, NotAllowedError } from '@backstage/errors';
+import type {
+  ActiveOrganizationResolver,
+  PortalContext,
+  PortalPlugin,
+} from '@ansible/portal-plugin-node';
+import type {
+  OrganizationList,
+  PatchRequest,
+} from '@ansible/portal-edge-fleets-poc-common';
 import type { CatalogItemList } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import * as https from 'node:https';
 import express from 'express';
-import { readUserOrganizations } from './aapAuth';
+import { readAapToken, requirePortalContext } from './requestContext';
 
 type FlightctlRequestOptions = {
   apiBaseUrl: string;
@@ -16,10 +27,15 @@ type FlightctlRequestOptions = {
 };
 
 type FlightctlRouterOptions = {
+  portalPlugin: PortalPlugin;
   httpAuth: HttpAuthService;
-  ansibleService: IAAPService;
+  userInfo: UserInfoService;
+  logger: LoggerService;
+  organizations: ActiveOrganizationResolver;
   config: Config;
 };
+
+type PortalRequest = express.Request & { portalContext?: PortalContext };
 
 type FlightctlApiResult = { status: number; body: unknown };
 
@@ -47,8 +63,7 @@ class FlightctlRouteError extends Error {
   }
 }
 
-// Temporary AAP-to-Flightctl organization mapping until the mapping API exists.
-const FLIGHTCTL_AAP_ORGANIZATION_ID = '1';
+const FLEET_UPDATE_OPERATION_ID = 'edge-fleets-poc.fleet.update';
 
 const MAX_FLEET_NAMES_PER_SELECTOR = 100;
 const MAX_FLEET_NAME_LENGTH = 253;
@@ -59,7 +74,7 @@ const FLEET_OS_SPEC_PATH = '/spec/template/spec/os';
 
 async function flightctlApiCall(
   url: URL,
-  options: FlightctlRequestOptions,
+  options: Pick<FlightctlRequestOptions, 'accessToken' | 'skipTlsVerify'>,
   requestOptions: FlightctlApiCallOptions = {},
 ): Promise<FlightctlApiResult> {
   if (url.protocol !== 'https:') {
@@ -249,7 +264,9 @@ function isFleetPatch(value: unknown): value is PatchRequest {
   if (
     !isRecord(operation) ||
     operation.op !== 'replace' ||
-    !isValidString(operation.path)
+    !isValidString(operation.path) ||
+    (operation.path !== FLEET_OS_SPEC_PATH &&
+      !operation.path.startsWith(`${FLEET_OS_SPEC_PATH}/`))
   ) {
     return false;
   }
@@ -281,6 +298,52 @@ function readFleetNames(req: express.Request): string[] | undefined {
   return uniqueValues;
 }
 
+// Flightctl exposes the AAP organization name as the organization externalId.
+export function pickFlightctlOrganizationId(
+  items: unknown,
+  aapOrganizationId: string,
+): string | undefined {
+  if (!Array.isArray(items)) return undefined;
+  const wanted = aapOrganizationId.trim().toLowerCase();
+  const matches = items.filter(
+    item =>
+      isRecord(item) &&
+      isRecord(item.metadata) &&
+      isRecord(item.spec) &&
+      typeof item.metadata.name === 'string' &&
+      typeof item.spec.externalId === 'string' &&
+      item.spec.externalId.trim().toLowerCase() === wanted,
+  ) as Array<{ metadata: { name: string } }>;
+  return matches.length === 1 ? matches[0].metadata.name : undefined;
+}
+
+async function resolveFlightctlOrganizationId(
+  connection: Omit<FlightctlRequestOptions, 'organizationId'>,
+  aapOrganizationId: string,
+): Promise<string> {
+  const result = await flightctlApiCall(
+    new URL('/api/v1/organizations', connection.apiBaseUrl),
+    connection,
+  );
+  if (result.status < 200 || result.status >= 300) {
+    throw new FlightctlRouteError(
+      502,
+      `Flightctl organization lookup failed (${result.status}).`,
+    );
+  }
+  const organizationId = pickFlightctlOrganizationId(
+    (result.body as OrganizationList | undefined)?.items,
+    aapOrganizationId,
+  );
+  if (!organizationId) {
+    throw new FlightctlRouteError(
+      403,
+      `The AAP organization '${aapOrganizationId}' is not mapped to one Flightctl organization for this user.`,
+    );
+  }
+  return organizationId;
+}
+
 async function resolveFlightctlRequestOptions(
   req: express.Request,
   options: FlightctlRouterOptions,
@@ -288,39 +351,28 @@ async function resolveFlightctlRequestOptions(
   const apiBaseUrl = options.config.getOptionalString(
     'ansible.edge-fleets-poc.flightctl.apiBaseUrl',
   );
-  const configuredOrganizationId = options.config
-    .getOptionalString('ansible.edge-fleets-poc.flightctl.organizationId')
-    ?.trim();
-  if (!apiBaseUrl || !configuredOrganizationId) {
+  if (!apiBaseUrl) {
     throw new FlightctlRouteError(
       500,
-      'Configure ansible.edge-fleets-poc.flightctl.apiBaseUrl and organizationId.',
+      'Configure ansible.edge-fleets-poc.flightctl.apiBaseUrl.',
     );
   }
 
-  const { accessToken, organizations } = await readUserOrganizations({
-    req,
-    httpAuth: options.httpAuth,
-    ansibleService: options.ansibleService,
-  });
-  const organization = organizations.find(
-    item => item.externalOrgId === FLIGHTCTL_AAP_ORGANIZATION_ID,
-  );
-  if (!organization) {
-    throw new FlightctlRouteError(
-      403,
-      'The AAP user does not have access to the configured Flightctl organization.',
-    );
-  }
-
-  return {
+  const context = requirePortalContext(req as PortalRequest);
+  const connection = {
     apiBaseUrl,
-    organizationId: configuredOrganizationId,
-    accessToken,
+    accessToken: readAapToken(req),
     skipTlsVerify:
       options.config.getOptionalBoolean(
         'ansible.edge-fleets-poc.flightctl.skipTlsVerify',
       ) ?? false,
+  };
+  return {
+    ...connection,
+    organizationId: await resolveFlightctlOrganizationId(
+      connection,
+      context.organizationId,
+    ),
   };
 }
 
@@ -329,22 +381,52 @@ async function proxyFlightctlRequest(
   res: express.Response,
   routerOptions: FlightctlRouterOptions,
   request: (options: FlightctlRequestOptions) => Promise<FlightctlApiResult>,
+  auditOperationId?: string,
 ): Promise<void> {
+  const context = (req as PortalRequest).portalContext;
+  const auditInput = auditOperationId
+    ? { fleetName: req.params.fleetName }
+    : undefined;
   try {
     const requestOptions = await resolveFlightctlRequestOptions(
       req,
       routerOptions,
     );
     const result = await request(requestOptions);
+    if (auditOperationId && context) {
+      const succeeded = result.status >= 200 && result.status < 300;
+      routerOptions.portalPlugin.emitAuditEvent({
+        operationId: auditOperationId,
+        userId: context.userId,
+        organizationId: context.organizationId,
+        organizationIds: context.organizationIds,
+        input: auditInput,
+        outcome: succeeded ? 'SUCCESS' : 'FAILURE',
+        ...(succeeded ? {} : { error: `Flightctl returned ${result.status}.` }),
+      });
+    }
     res.status(result.status).json(result.body);
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
         : 'Failed to call the Flightctl API.';
+    if (auditOperationId && context) {
+      routerOptions.portalPlugin.emitAuditEvent({
+        operationId: auditOperationId,
+        userId: context.userId,
+        organizationId: context.organizationId,
+        organizationIds: context.organizationIds,
+        input: auditInput,
+        outcome: 'FAILURE',
+        error: message,
+      });
+    }
     const status =
       error instanceof FlightctlRouteError
         ? error.status
+        : error instanceof NotAllowedError
+        ? 403
         : error instanceof AuthenticationError
         ? 401
         : 502;
@@ -356,6 +438,15 @@ export function createFlightctlFleetsRouter(
   options: FlightctlRouterOptions,
 ): express.Router {
   const router = express.Router();
+
+  router.use(
+    options.portalPlugin.createMiddleware({
+      httpAuth: options.httpAuth,
+      userInfo: options.userInfo,
+      logger: options.logger,
+      organizations: options.organizations,
+    }),
+  );
 
   router.get('/fleets', async (req, res) => {
     const query: FleetListQuery = {
@@ -433,8 +524,12 @@ export function createFlightctlFleetsRouter(
         return;
       }
 
-      await proxyFlightctlRequest(req, res, options, requestOptions =>
-        patchFleetOs(requestOptions, fleetName, req.body),
+      await proxyFlightctlRequest(
+        req,
+        res,
+        options,
+        requestOptions => patchFleetOs(requestOptions, fleetName, req.body),
+        FLEET_UPDATE_OPERATION_ID,
       );
     },
   );

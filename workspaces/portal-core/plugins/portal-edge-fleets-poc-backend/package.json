@@ -18,8 +18,8 @@
     "clean": "backstage-cli package clean"
   },
   "dependencies": {
-    "@ansible/backstage-rhaap-common": "workspace:^",
     "@ansible/portal-edge-fleets-poc-common": "workspace:^",
+    "@ansible/portal-plugin-node": "workspace:^",
     "@backstage/backend-plugin-api": "^1.8.0",
     "@backstage/config": "^1.3.6",
     "@backstage/errors": "^1.2.7",
