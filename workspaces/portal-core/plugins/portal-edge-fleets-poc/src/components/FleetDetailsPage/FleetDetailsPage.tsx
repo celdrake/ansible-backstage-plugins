@@ -90,7 +90,7 @@ const FleetMaintenanceWindow = ({
       <DefaultEmptyState
         icon={<RiSettings3Line size={28} />}
         title="No maintenance window"
-        description="Devices receive updates as soon as they are available. Set a window in Edge Manager to control download and install timing."
+        description={text}
         actionLabel={canUpdateFleet ? 'Set window in Edge Manager' : ''}
       />
     );
@@ -104,7 +104,6 @@ const FleetMaintenanceWindow = ({
     />
   );
 };
-// CELIA-WIP: Check overall layout and responsiveness
 
 type FleetOsDetailsProps = {
   osSpec: DeviceOsSpec | undefined;
@@ -247,8 +246,6 @@ const FleetDetailsPageContent = ({
   const osCatalogRef = osSpec?.catalogItemRef;
 
   const catalogItemsState = useFleetCatalogItems([fleetName]);
-
-  // CELIA-WIP: DISCUSS UX WITH PAOLA, page should be renderd saying we can't tell about the OS
   if (catalogItemsState.status === 'loading') {
     return <Progress />;
   }
@@ -265,7 +262,6 @@ const FleetDetailsPageContent = ({
     ? getOsCatalogItem(osCatalogRef, fleetCatalogItems)
     : { catalogItem: undefined, versionToUpdate: undefined };
 
-  // CELIA-WIP: Design wants to block updates if the fleet is invalid
   const updatePolicy = fleet.spec.template.spec.updatePolicy;
   const hasUpdatePolicy = Boolean(
     updatePolicy?.updateSchedule || updatePolicy?.downloadSchedule,

@@ -22,8 +22,8 @@ export function requirePortalContext(req: {
       'Sign in to Portal before using Edge Fleets.',
     );
   }
-  // CELIA-WIP: needs clarification with the Portal team. Flightctl requires
-  // exactly one organization, so multi-membership cannot be handled here yet.
+  // TODO: needs clarification with the Portal team. Flightctl requires
+  // exactly one organization, so multi-membership cannot be handled without some kind of organization selection.
   if (!context.organizationId) {
     throw new NotAllowedError(
       'A single validated Portal organization is required.',

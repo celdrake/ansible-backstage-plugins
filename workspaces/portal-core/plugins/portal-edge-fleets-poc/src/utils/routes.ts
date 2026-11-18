@@ -5,9 +5,7 @@ export const getFleetDetailsPath = (fleetName: string) =>
 
 export const getFleetsPath = () => '/edge-fleets-poc/fleets';
 
-// CELIA-WIP: This should be a constant in the config.
 export const getRhemHomeUrl = () => 'https://edge-manager.redhat.com';
 
-// CELIA-WIP: FIX LINK FOR RHEM
 export const getRhemFleetUrl = (fleetName: string) =>
   `${getRhemHomeUrl()}${getFleetDetailsPath(fleetName)}`;

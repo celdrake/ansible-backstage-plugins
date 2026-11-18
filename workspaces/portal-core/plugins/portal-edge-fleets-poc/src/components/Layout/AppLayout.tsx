@@ -10,10 +10,6 @@ type AppLayoutProps = {
   header?: React.ReactNode;
 };
 
-// CELIA-WIP: titleLink
-// CELIA-WIP: TITLE DOES NOT HAVE THE EXPECTED FONT-SIZE, CHECK LATER
-// Somehow the title is in Breadcrumbs, and has a "font-size: inherit" rule that stays even
-// after setting "font-size: 1.5em !important" in the header.
 const AppLayout = ({
   title = 'Edge',
   breadcrumbs,
