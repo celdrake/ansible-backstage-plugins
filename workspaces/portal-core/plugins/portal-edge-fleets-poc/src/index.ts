@@ -1,2 +1,2 @@
-/** NFS feature entry point. The source app loads `./alpha` through discovery. */
-export { default } from './alpha';
+/** RHDH 1.x loads this as the legacy Scalprum `PluginRoot` export. */
+export { default, EdgeFleetsPage, FleetDetailsPage } from './plugin';
