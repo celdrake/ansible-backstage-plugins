@@ -1,6 +1,8 @@
 import type {
+  BackstageCredentials,
   HttpAuthService,
   LoggerService,
+  PermissionsService,
   UserInfoService,
 } from '@backstage/backend-plugin-api';
 import type { Config } from '@backstage/config';
@@ -15,8 +17,14 @@ import type {
   Organization,
   PatchRequest,
 } from '@ansible/portal-edge-fleets-poc-common';
+import {
+  fleetUpdateOperation,
+  fleetUpdatePermission,
+} from '@ansible/portal-edge-fleets-poc-common/operations';
 import type { CatalogItemList } from '@ansible/portal-edge-fleets-poc-common/alpha';
 import * as https from 'node:https';
+import type { BasicPermission } from '@backstage/plugin-permission-common';
+import { AuthorizeResult } from '@backstage/plugin-permission-common';
 import express from 'express';
 import { readAapToken, requirePortalContext } from './requestContext';
 
@@ -33,6 +41,7 @@ type FlightctlRouterOptions = {
   userInfo: UserInfoService;
   logger: LoggerService;
   organizations: ActiveOrganizationResolver;
+  permissions: PermissionsService;
   config: Config;
 };
 
@@ -65,8 +74,6 @@ class FlightctlRouteError extends Error {
     super(message);
   }
 }
-
-const FLEET_UPDATE_OPERATION_ID = 'edge-fleets-poc.fleet.update';
 
 const MAX_CACHED_ORGANIZATIONS = 1000;
 const MAX_FLEET_NAMES_PER_SELECTOR = 100;
@@ -261,7 +268,7 @@ function readOptionalQueryString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-function isFleetPatch(value: unknown): value is PatchRequest {
+export function isFleetPatch(value: unknown): value is PatchRequest {
   if (!Array.isArray(value) || value.length !== 1) return false;
 
   const [operation] = value;
@@ -324,7 +331,8 @@ export function pickFlightctlOrganizationId(
     item =>
       isValidOrganizationItem(item) &&
       // AAP should have lowercased the organization name, but we guard in case it's not
-      item.spec.externalId.toLowerCase() === aapOrganizationId.toLowerCase(),
+      item.spec.externalId.toLowerCase() ===
+        aapOrganizationId.trim().toLowerCase(),
   ) as Organization[];
   return matches.length === 1 ? matches[0].metadata.name : undefined;
 }
@@ -408,18 +416,42 @@ async function resolveFlightctlRequestOptions(
   };
 }
 
+export async function requirePermission(
+  permissions: PermissionsService,
+  credentials: BackstageCredentials,
+  permission: BasicPermission,
+): Promise<void> {
+  const [decision] = await permissions.authorize([{ permission }], {
+    credentials,
+  });
+  if (decision?.result !== AuthorizeResult.ALLOW) {
+    throw new NotAllowedError(`Permission denied: ${permission.name}.`);
+  }
+}
+
 async function proxyFlightctlRequest(
   req: express.Request,
   res: express.Response,
   routerOptions: FlightctlRouterOptions,
   request: (options: FlightctlRequestOptions) => Promise<FlightctlApiResult>,
   auditOperationId?: string,
+  requiredPermission?: BasicPermission,
 ): Promise<void> {
   const context = (req as PortalRequest).portalContext;
   const auditInput = auditOperationId
     ? { fleetName: req.params.fleetName }
     : undefined;
   try {
+    if (requiredPermission) {
+      await requirePermission(
+        routerOptions.permissions,
+        // Express 5 request types differ from the plugin API's Express 4 types.
+        await routerOptions.httpAuth.credentials(req as any, {
+          allow: ['user'],
+        }),
+        requiredPermission,
+      );
+    }
     const requestOptions = await resolveFlightctlRequestOptions(
       req,
       routerOptions,
@@ -561,7 +593,8 @@ export function createFlightctlFleetsRouter(
         res,
         options,
         requestOptions => patchFleetOs(requestOptions, fleetName, req.body),
-        FLEET_UPDATE_OPERATION_ID,
+        fleetUpdateOperation.id,
+        fleetUpdatePermission,
       );
     },
   );

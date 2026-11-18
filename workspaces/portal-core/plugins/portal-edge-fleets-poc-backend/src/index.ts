@@ -21,6 +21,7 @@ export default createBackendPlugin({
         httpRouter: coreServices.httpRouter,
         config: coreServices.rootConfig,
         organizations: portalActiveOrganizationServiceRef,
+        permissions: coreServices.permissions,
         health: portalHealthServiceRef,
       },
       async init({
@@ -30,6 +31,7 @@ export default createBackendPlugin({
         httpRouter,
         config,
         organizations,
+        permissions,
         health,
       }) {
         const portalPlugin = createPortalPlugin({
@@ -51,6 +53,7 @@ export default createBackendPlugin({
             userInfo,
             logger,
             organizations,
+            permissions,
             config,
           }),
         );
