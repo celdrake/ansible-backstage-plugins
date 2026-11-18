@@ -6,6 +6,7 @@ import { compatWrapper } from '@backstage/core-compat-api';
 import RouterIcon from '@material-ui/icons/Router';
 
 import { fleetDetailsRoutePath } from './utils/routes';
+import { ConfigGate } from './utils/configGate';
 import { UserPermissionsProvider } from './hooks/useUserPermissions';
 
 import '@backstage/ui/css/styles.css';
@@ -25,9 +26,11 @@ export default createFrontendPlugin({
             './components/FleetsPage/FleetsPage'
           );
           return compatWrapper(
-            <UserPermissionsProvider>
-              <FleetsPage />
-            </UserPermissionsProvider>,
+            <ConfigGate>
+              <UserPermissionsProvider>
+                <FleetsPage />
+              </UserPermissionsProvider>
+            </ConfigGate>,
           );
         },
       },
@@ -42,9 +45,11 @@ export default createFrontendPlugin({
             './components/FleetDetailsPage/FleetDetailsPage'
           );
           return compatWrapper(
-            <UserPermissionsProvider>
-              <FleetDetailsPage />
-            </UserPermissionsProvider>,
+            <ConfigGate>
+              <UserPermissionsProvider>
+                <FleetDetailsPage />
+              </UserPermissionsProvider>
+            </ConfigGate>,
           );
         },
       },
