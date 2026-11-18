@@ -79,13 +79,6 @@ const getDurationInMinutes = (duration: string): number | undefined => {
   }
 };
 
-const getScheduleTimeZone = (schedule: UpdateSchedule): string => {
-  if (!schedule.timeZone || schedule.timeZone === 'Local') {
-    return "device's local timezone";
-  }
-  return schedule.timeZone;
-};
-
 type MaintenanceWindow = {
   startMinutes: number;
   endMinutes: number;

@@ -15,8 +15,8 @@ import { getOsCatalogItemDisplayText } from '../../utils/catalogItems';
 import DescriptionList, {
   DescriptionListItem,
 } from '../common/DescriptionList';
-
 import FleetUpdatePolicyDetails from '../common/FleetUpdatePolicyDetails';
+
 import styles from './FleetOsUpdateDialog.module.css';
 
 const FleetOsUpdateFooterActions = ({
@@ -179,7 +179,10 @@ const FleetOsUpdateDialog = ({
                   in Red Hat Edge Manager.
                 </Text>
               </Flex>
-              <FleetUpdatePolicyDetails updatePolicy={updatePolicy} />
+              <FleetUpdatePolicyDetails
+                updatePolicy={updatePolicy}
+                canUpdateFleet
+              />
             </Flex>
           </section>
         )}
