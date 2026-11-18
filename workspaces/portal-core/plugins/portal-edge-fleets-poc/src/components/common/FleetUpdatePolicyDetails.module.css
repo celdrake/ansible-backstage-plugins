@@ -1,0 +1,25 @@
+.fleetUpdatePolicySchedule {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-3);
+  border-radius: var(--bui-radius-2);
+  min-width: 0;
+}
+
+.fleetUpdatePolicyScheduleFilled {
+  background-color: color-mix(in srgb, var(--bui-bg-info) 65%, white);
+  border: 1px solid color-mix(in srgb, var(--bui-border-info) 45%, white);
+  padding: var(--bui-space-3) var(--bui-space-4);
+}
+
+.fleetUpdatePolicyCronExpression {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: inherit;
+  line-height: inherit;
+  overflow-wrap: anywhere;
+  font-weight: var(--bui-font-weight-regular, 400);
+}
+
+.fleetUpdatePolicySeparator {
+  border-top: 1px solid color-mix(in srgb, var(--bui-border-info) 28%, white);
+}

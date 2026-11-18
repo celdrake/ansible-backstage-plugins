@@ -1,0 +1,57 @@
+import { Link, Text } from '@backstage/ui';
+import { RiArrowRightSLine } from '@remixicon/react';
+
+import styles from './AppBreadcrumbs.module.css';
+
+export type BreadcrumbItem = {
+  label: string;
+  href?: string;
+};
+
+const AppBreadcrumbs = ({ items }: { items: BreadcrumbItem[] | undefined }) => {
+  if (!items || items.length === 0) {
+    return null;
+  }
+  return (
+    <nav aria-label="Breadcrumb" className={styles.breadcrumbsWrapper}>
+      <ol className={styles.breadcrumbsList}>
+        {items.map((item, index) => {
+          const isCurrent = index === items.length - 1 || !item.href;
+          return (
+            <li
+              key={`${item.label}-${index}`}
+              className={styles.breadcrumbItem}
+            >
+              {index > 0 ? (
+                <RiArrowRightSLine
+                  className={styles.breadcrumbStep}
+                  size={14}
+                  aria-hidden
+                />
+              ) : null}
+              {isCurrent ? (
+                <Text
+                  variant="body-small"
+                  className={styles.breadcrumbCurrent}
+                  aria-current="page"
+                >
+                  {item.label}
+                </Text>
+              ) : (
+                <Link
+                  href={item.href!}
+                  variant="body-small"
+                  className={styles.breadcrumbLink}
+                >
+                  {item.label}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+};
+
+export default AppBreadcrumbs;

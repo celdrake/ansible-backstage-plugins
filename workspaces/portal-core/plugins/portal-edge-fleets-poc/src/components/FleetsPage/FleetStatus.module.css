@@ -1,0 +1,28 @@
+.fleetStatusWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bui-space-2);
+}
+
+.fleetStatusMarker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fleetStatusMarkerSuccess {
+  background-color: var(--bui-fg-success);
+}
+
+.fleetStatusMarkerDanger {
+  background-color: var(--bui-fg-danger);
+}
+
+.fleetStatusMarkerWarning {
+  background-color: var(--bui-fg-warning);
+}
+
+.fleetStatusMarkerInfo {
+  background-color: var(--bui-fg-info);
+}

@@ -1,0 +1,55 @@
+.fleetsPageStackLayout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-1);
+  min-width: 0;
+}
+
+.fleetListTableEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bui-space-2);
+  padding: var(--bui-space-8) var(--bui-space-4);
+  text-align: center;
+}
+
+.fleetListActionsMenuWrapper {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Make the items not wrap; the menu expands to the width of the items. */
+.fleetListActionsMenu {
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+}
+
+.fleetActionsMenuItem {
+  white-space: nowrap;
+}
+
+.osPrimaryText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.fleetsListSearchToolbar {
+  flex-wrap: wrap;
+}
+
+.fleetsListSearchToolbar > * {
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: 20rem;
+}
+
+.fleetNameLink {
+  color: var(--bui-fg-info);
+  text-decoration: none;
+  max-width: 100%;
+}
+
+.fleetNameLink:hover {
+  text-decoration: underline;
+}

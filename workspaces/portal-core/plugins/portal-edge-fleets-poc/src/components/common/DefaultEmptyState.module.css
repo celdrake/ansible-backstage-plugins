@@ -1,0 +1,29 @@
+/* Card-sized empty-state guide (title + next step + CTA) */
+.defaultEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--bui-space-3);
+  padding: var(--bui-space-2) 0;
+  flex: 1 1 auto;
+}
+
+.defaultEmptyStateIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--bui-radius-2, 6px);
+  color: var(--bui-fg-secondary, #6a6e73);
+  background-color: var(--bui-bg-muted, rgba(0, 0, 0, 0.04));
+}
+
+.defaultEmptyStateTitle {
+  line-height: 1.3;
+}
+
+.defaultEmptyStateBody {
+  max-width: 22rem;
+  line-height: 1.45;
+}

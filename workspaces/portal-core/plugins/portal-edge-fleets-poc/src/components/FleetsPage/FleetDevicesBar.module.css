@@ -1,0 +1,58 @@
+.fleetDevicesBarWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-1);
+  min-width: 0;
+}
+
+.fleetDevicesBar {
+  display: flex;
+  height: 8px;
+  border-radius: var(--bui-radius-1);
+  overflow: hidden;
+  background-color: var(--bui-bg-neutral-2);
+}
+
+.fleetDevicesBarSegment {
+  height: 100%;
+  min-width: 0;
+}
+
+.fleetDevicesBarSegmentSuccess {
+  background-color: var(--bui-fg-success);
+}
+
+.fleetDevicesBarSegmentInfo {
+  background-color: var(--bui-fg-info);
+}
+
+.fleetDevicesBarSegmentWarning {
+  background-color: var(--bui-fg-warning);
+}
+
+.fleetDevicesBarSegmentUnknown {
+  background-color: color-mix(
+    in srgb,
+    var(--bui-fg-secondary) 45%,
+    var(--bui-bg-neutral-2) 55%
+  );
+}
+
+.fleetDevicesProgressCounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bui-space-1) var(--bui-space-3);
+}
+
+.fleetDevicesCountItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fleetDevicesSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}

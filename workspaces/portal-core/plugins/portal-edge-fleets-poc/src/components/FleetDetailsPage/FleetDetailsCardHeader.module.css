@@ -1,0 +1,7 @@
+.fleetDetailsCardHeaderTitle {
+  width: 100%;
+}
+
+.fleetDetailsCardHeaderTitleMeta {
+  flex-shrink: 0;
+}

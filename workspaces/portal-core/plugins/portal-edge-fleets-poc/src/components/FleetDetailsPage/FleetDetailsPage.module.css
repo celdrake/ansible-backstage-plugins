@@ -1,0 +1,80 @@
+.fleetDetailsPrimaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bui-space-4);
+}
+
+@media (max-width: 1100px) {
+  .fleetDetailsPrimaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .fleetDetailsPrimaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fleetDetailsSecondaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--bui-space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .fleetDetailsSecondaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rhemBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bui-space-4);
+  padding: var(--bui-space-4) var(--bui-space-5);
+  border: 1px solid var(--bui-border);
+  border-radius: var(--bui-radius-2);
+  background-color: var(--bui-bg-surface-1);
+}
+
+.fleetDetailsCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fleetDetailsCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bui-space-4);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fleetTargetOs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--bui-space-2);
+  padding-bottom: var(--bui-space-3);
+  border-bottom: 1px solid var(--bui-border);
+}
+
+.fleetOsExtraSection {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  column-gap: var(--bui-space-4);
+  row-gap: var(--bui-space-3);
+  align-items: center;
+}
+
+.fleetOsSourceNote {
+  margin-top: auto;
+  padding-top: var(--bui-space-3);
+  border-top: 1px solid var(--bui-border);
+}

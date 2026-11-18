@@ -1,0 +1,24 @@
+.descriptionList {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  column-gap: var(--bui-space-5);
+  row-gap: var(--bui-space-3);
+  align-items: baseline;
+  margin: 0;
+  padding: 0;
+}
+
+.descriptionListItem {
+  display: contents;
+}
+
+.descriptionListItemLabel {
+  margin: 0;
+  color: var(--bui-fg-secondary);
+}
+
+.descriptionListItemValue {
+  margin: 0;
+  min-width: 0;
+  line-height: 1.45;
+}
